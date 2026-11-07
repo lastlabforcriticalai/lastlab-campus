@@ -34,13 +34,13 @@
   function formMarkup(){return `<div class="tabset"><button type="button" data-tab="login" class="${loginTab==='login'?'active':''}">Ingresar</button><button type="button" data-tab="register" class="${loginTab==='register'?'active':''}">Crear usuario</button></div>
     <p>${loginTab==='login'?'Ingresá con tu usuario y contraseña para recuperar tu avance.':'Creá una cuenta para conservar tus evaluaciones y actividades aunque cambies de dispositivo.'}</p>
     <form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required placeholder="ejemplo: estudiante_01"></div>
-    ${loginTab==='register'?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div><div class="row"><label for="inviteInput">Código de activación (solo cuenta inicial)</label><input id="inviteInput" type="password" name="inviteCode" autocomplete="off" placeholder="Solo si las inscripciones están cerradas"><small>Este código es diferente de la contraseña. No se comparte ni se guarda en el navegador.</small></div>':''}
+    ${loginTab==='register'?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div><div class="row"><label for="inviteInput">Código de activación (solo cuenta inicial)</label><input id="inviteInput" type="password" name="inviteCode" autocomplete="off" placeholder="Solo si las inscripciones están cerradas"><small id="inviteLength">Longitud del código: 0 caracteres</small><small>Este código es diferente de la contraseña. No se comparte ni se guarda en el navegador.</small></div>':''}
     <div class="row"><label for="passInput">Contraseña (mínimo 12 caracteres)</label><input type="password" id="passInput" name="password" autocomplete="${loginTab==='login'?'current-password':'new-password'}" required minlength="${loginTab==='login'?1:12}" maxlength="128"></div>
     <button class="primary" type="submit">${loginTab==='login'?'Iniciar sesión':'Crear mi cuenta'}</button></form>
     <div class="notice" id="accountNotice" hidden></div><p class="hint">En esta primera versión no solicitamos correo electrónico. Guardá tu contraseña: la recuperación automática todavía no está habilitada.</p>`;}
   function adminMarkup(){return `<p class="muted">Cuenta docente · <b>${esc(user.username)}</b></p><div class="controls"><button type="button" class="secondary" id="adminLoad">Consultar progreso de estudiantes</button><button type="button" class="secondary" id="adminCSV" disabled>Exportar CSV</button></div><div id="adminResult" class="table-wrap"></div>`;}
   function render(){
-    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));$('#accountForm').addEventListener('submit',onSubmit);return;}
+    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite){invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});}return;}
     slot.innerHTML=`<p>Sesión iniciada como <b>${esc(user.displayName||user.username)}</b>. Tu avance se guarda en Cloudflare D1 y puede recuperarse desde otros dispositivos.</p>
     <div class="controls"><button class="primary" id="logout">Cerrar sesión</button><button class="secondary" id="passwordChange">Cambiar contraseña</button></div>
     <div class="notice" id="accountNotice" hidden></div>${user.role==='admin'?adminMarkup():''}
@@ -51,6 +51,7 @@
   }
   async function onSubmit(e){
     e.preventDefault();const form=e.currentTarget;const values=Object.fromEntries(new FormData(form));
+    if(loginTab==='register' && values.inviteCode && values.inviteCode.length<32){notice('El código de activación es demasiado corto. Debe tener al menos 32 caracteres; se recomendaron 64. No se envió ningún intento al servidor.',true);return;}
     notice('Conectando con el campus…');
     const submit=form.querySelector('[type=submit]');submit.disabled=true;
     try{
