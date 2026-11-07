@@ -3,7 +3,9 @@ import { ANSWER_KEYS } from './quiz-keys.mjs';
 const COOKIE = '__Host-lastlab_session';
 const COURSE_ID = 'fintech-blockchain-ia-2026';
 const SESSION_DAYS = 14;
-const ITERATIONS = 600000;
+// Cloudflare Workers limits one PBKDF2 deriveBits operation to at most 100,000 iterations.
+// Closed pilot only: reconsider authentication architecture before enrolling students.
+const ITERATIONS = 100000;
 const MAX_BODY_BYTES = 26000;
 const MAX_STATE_BYTES = 22000;
 const enc = new TextEncoder();
