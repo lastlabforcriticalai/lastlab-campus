@@ -19,8 +19,10 @@
 .account-body .hint{font-size:11px;color:#6c826f;margin-top:13px}
 .account-body .muted{color:#58735c}
 .account-body .table-wrap{overflow:auto;max-height:390px;margin-top:10px}
-.account-body table{border-collapse:collapse;width:100%;font-size:11px;min-width:530px}
-.account-body th,.account-body td{padding:7px;text-align:left;border-bottom:1px solid #dce6dd;white-space:nowrap}
+.account-body table{border-collapse:collapse;width:100%;min-width:0;table-layout:fixed;font-size:11px}
+.account-body th,.account-body td{padding:8px 5px;text-align:left;border-bottom:1px solid #dce6dd;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+.account-body th:nth-child(2),.account-body td:nth-child(2){width:29%}
+.account-body th:nth-child(3),.account-body td:nth-child(3),.account-body th:nth-child(4),.account-body td:nth-child(4),.account-body th:nth-child(5),.account-body td:nth-child(5){text-align:center}
 .account-body th{background:#edf5ed}
 .account-body .tabset{display:flex;gap:8px;margin-bottom:15px}
 .account-body .tabset button{flex:1;padding:9px;border:1px solid #a2c0a4;border-radius:7px;color:#295637;background:#f0f4ee}
