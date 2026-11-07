@@ -92,7 +92,7 @@ test('activar la cuenta inicial sigue limitando intentos de códigos incorrectos
 
 test('PBKDF2 cumple con el máximo de Cloudflare Workers',()=>{
  const source=readFileSync(new URL('../src/worker.mjs',import.meta.url),'utf8');
- const configured=Number(source.match(/const ITERATIONS = (\\d+);/)?.[1]);
+ const configured=Number(source.match(/const ITERATIONS = (\d+);/)?.[1]);
  assert.ok(configured>0&&configured<=100000,'Workers rechaza PBKDF2 por encima de 100000');
 });
 
