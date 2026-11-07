@@ -68,3 +68,23 @@ test('código bootstrap no da rol docente cuando inscripciones públicas están 
  const r=await call(env,'/api/auth/register',{method:'POST',body:{username:'alumno_03',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
  assert.equal(r.status,201);assert.equal(r.data.user.role,'student');
 });
+
+
+test('activar la cuenta inicial no hereda el bloqueo previo de registro general',async()=>{
+ const env=makeEnv();env.REGISTRATION_ENABLED='false';env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ const encoded=new TextEncoder().encode(env.RATE_LIMIT_SALT+'|register|local|primero');
+ const key=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',encoded))).map(n=>n.toString(16).padStart(2,'0')).join('');
+ await env.DB.prepare('INSERT INTO rate_limits(rate_key,bucket,hits) VALUES(?,?,?)').bind(key,Math.floor(Date.now()/1000/3600),99).run();
+ const r=await call(env,'/api/auth/register',{method:'POST',body:{username:'primero',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,201);assert.equal(r.data.user.role,'admin');
+});
+
+test('activar la cuenta inicial sigue limitando intentos de códigos incorrectos',async()=>{
+ const env=makeEnv();env.REGISTRATION_ENABLED='false';env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ for(let i=0;i<5;i++){
+   const r=await call(env,'/api/auth/register',{method:'POST',body:{username:'primero',password:'contrasenaDePrueba2026!',inviteCode:'equivocado'}});
+   assert.equal(r.status,403);
+ }
+ const r=await call(env,'/api/auth/register',{method:'POST',body:{username:'primero',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,429);
+});
