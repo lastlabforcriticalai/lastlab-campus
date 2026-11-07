@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lastlab-campus",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-11-07",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "404-page"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lastlab-campus-db",
+      "database_id": "67c865fd-b782-4334-9a71-b5aac2dd93d4",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "REGISTRATION_ENABLED": "false"
+  }
+}
