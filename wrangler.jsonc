@@ -20,6 +20,8 @@
   ],
   "vars": {
     "REGISTRATION_ENABLED": "false",
-    "INVITES_ENABLED": "true"
+    "INVITES_ENABLED": "true",
+    "EMAIL_RECOVERY_ENABLED": "false",
+    "BACKUP_RECOVERY_ENABLED": "false"
   }
 }
