@@ -7,9 +7,9 @@ import worker from '../src/worker.mjs';
 const host='https://curso.lastlab.example';
 function makeEnv(){
  const sqlite=new DatabaseSync(':memory:');
- sqlite.exec('PRAGMA foreign_keys=ON;'+readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));
+ sqlite.exec('PRAGMA foreign_keys=ON;'+readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8')+readFileSync(new URL('../migrations/0002_student_access.sql',import.meta.url),'utf8'));
  const adapt=(sql)=>({bind(...args){let stmt=sqlite.prepare(sql);return {first:async()=>stmt.get(...args)||null,all:async()=>({results:stmt.all(...args)}),run:async()=>stmt.run(...args)}}});
- return {DB:{prepare:adapt,async batch(items){return Promise.all(items);}},RATE_LIMIT_SALT:'test-only-salt-NEVER-PRODUCTION',REGISTRATION_ENABLED:'true',ASSETS:{fetch:async()=>new Response('ok')}};
+ return {DB:{prepare:adapt,async batch(items){sqlite.exec('BEGIN');try{const rows=[];for(const item of items)rows.push(await item.run());sqlite.exec('COMMIT');return rows;}catch(e){sqlite.exec('ROLLBACK');throw e;}}},RATE_LIMIT_SALT:'test-only-salt-NEVER-PRODUCTION',REGISTRATION_ENABLED:'true',ASSETS:{fetch:async()=>new Response('ok')}};
 }
 async function call(env,path,{method='GET',body,sessionCookie='',origin=host}={}){
  const headers={};if(origin)headers.origin=origin;if(sessionCookie)headers.cookie=sessionCookie;
@@ -92,6 +92,68 @@ test('activar la cuenta inicial sigue limitando intentos de códigos incorrectos
 
 test('PBKDF2 cumple con el máximo de Cloudflare Workers',()=>{
  const source=readFileSync(new URL('../src/worker.mjs',import.meta.url),'utf8');
- const configured=Number(source.match(/const ITERATIONS = (\\d+);/)?.[1]);
+ const configured=Number(source.match(/const ITERATIONS = (\d+);/)?.[1]);
  assert.ok(configured>0&&configured<=100000,'Workers rechaza PBKDF2 por encima de 100000');
+});
+
+
+test('docente genera invitaciones privadas, alumno se registra y el código se consume',async()=>{
+ const env=makeEnv();env.REGISTRATION_ENABLED='false';env.INVITES_ENABLED='true';
+ env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ let r=await call(env,'/api/auth/register',{method:'POST',body:{username:'profesor1',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,201);assert.equal(r.data.user.role,'admin');
+ const teacherCookie=r.cookie;
+ r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:teacherCookie,body:{count:2,label:'Piloto de noviembre'}});
+ assert.equal(r.status,201);assert.equal(r.data.codes.length,2);
+ const invite=r.data.codes[0];assert.match(invite,/^[0-9a-f]{64}$/);
+ const dbRow=await env.DB.prepare('SELECT token_hash FROM course_invites LIMIT 1').bind().first();
+ assert.notEqual(dbRow.token_hash,invite);
+ r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student1',password:'PasswordSeguroDePrueba2026!',inviteCode:invite}});
+ assert.equal(r.status,201);assert.equal(r.data.user.role,'student');
+ const studentCookie=r.cookie;
+ r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:studentCookie,body:{count:1}});
+ assert.equal(r.status,403);
+ r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student2',password:'PasswordSeguroDePrueba2026!',inviteCode:invite}});
+ assert.equal(r.status,403);
+ r=await call(env,'/api/admin/invites',{sessionCookie:teacherCookie});
+ assert.equal(r.status,200);assert.equal(r.data.invites.length,2);
+ const unused=r.data.invites.find(row=>!row.redeemed_at);
+ r=await call(env,'/api/admin/invites/revoke',{method:'POST',sessionCookie:teacherCookie,body:{tokenHash:unused.token_hash}});
+ assert.equal(r.status,200);
+ const secondCode=(await env.DB.prepare('SELECT token_hash FROM course_invites WHERE redeemed_at IS NOT NULL').bind().first()).token_hash;
+ assert.equal(typeof secondCode,'string');
+});
+
+test('recuperación docente invalida el código y las sesiones antiguas',async()=>{
+ const env=makeEnv();env.REGISTRATION_ENABLED='false';env.INVITES_ENABLED='true';
+ env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ let r=await call(env,'/api/auth/register',{method:'POST',body:{username:'profesor2',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ const admin=r.cookie;
+ r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:admin,body:{count:1}});
+ const invite=r.data.codes[0];
+ r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student3',password:'PasswordOriginalSeguro2026!',inviteCode:invite}});
+ const oldSession=r.cookie;
+ r=await call(env,'/api/admin/recovery-code',{method:'POST',sessionCookie:admin,body:{username:'student3'}});
+ assert.equal(r.status,201);assert.match(r.data.code,/^[0-9a-f]{64}$/);
+ const resetCode=r.data.code;
+ r=await call(env,'/api/auth/reset-password',{method:'POST',body:{username:'student3',recoveryCode:resetCode,newPassword:'OtraContrasenaSegura2026!'}});
+ assert.equal(r.status,200);
+ r=await call(env,'/api/auth/me',{sessionCookie:oldSession});assert.equal(r.data.user,null);
+ r=await call(env,'/api/auth/reset-password',{method:'POST',body:{username:'student3',recoveryCode:resetCode,newPassword:'OtraContrasenaSegura2026!'}});
+ assert.equal(r.status,403);
+ r=await call(env,'/api/auth/login',{method:'POST',body:{username:'student3',password:'PasswordOriginalSeguro2026!'}});
+ assert.equal(r.status,401);
+ r=await call(env,'/api/auth/login',{method:'POST',body:{username:'student3',password:'OtraContrasenaSegura2026!'}});
+ assert.equal(r.status,200);
+});
+
+test('módulo inactivo conserva el registro cerrado y rechaza administración nueva',async()=>{
+ const env=makeEnv();env.REGISTRATION_ENABLED='false';env.INVITES_ENABLED='false';
+ env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ let r=await call(env,'/api/auth/register',{method:'POST',body:{username:'profesor3',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,201);
+ r=await call(env,'/api/admin/invites',{sessionCookie:r.cookie});
+ assert.equal(r.status,503);
+ r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student4',password:'PasswordOriginalSeguro2026!',inviteCode:'a'.repeat(64)}});
+ assert.equal(r.status,403);
 });

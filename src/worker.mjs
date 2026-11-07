@@ -1,4 +1,5 @@
 import { ANSWER_KEYS } from './quiz-keys.mjs';
+import {issueInvites,listInvites,revokeInvite,isValidInvite,redeemInvite,issueRecovery,isValidRecovery,redeemRecovery} from './student-access.mjs';
 
 const COOKIE = '__Host-lastlab_session';
 const COURSE_ID = 'fintech-blockchain-ia-2026';
@@ -71,40 +72,41 @@ async function createSession(env,userId) {
 async function register(env,req) {
   const b=await body(req), username=String(b.username||'').trim().toLowerCase();
   const display=String(b.displayName||'').trim();
-  const password=b.password;
+  const password=b.password,code=typeof b.inviteCode==='string'?b.inviteCode.trim():'';
   if(!usernameOK(username))return fail('Usuario: 3–30 caracteres, letras minúsculas, números, punto, guion o guion bajo.');
   if(typeof password!=='string'||password.length<12||password.length>128)return fail('La contraseña debe tener entre 12 y 128 caracteres.');
   if(display.length>80)return fail('El nombre visible no puede superar los 80 caracteres.');
-  const bootstrapMode=env.REGISTRATION_ENABLED!=='true';
-  // Rate limits for closed pilot activation are independent of public registration.
-  // Failed invitation attempts remain limited; legacy registration attempts cannot block bootstrap.
-  if(!await limit(env,req,bootstrapMode?'bootstrap-register':'register',username,5,3600))
-    return fail(bootstrapMode?'Demasiados intentos de activación. Probá más tarde.':'Demasiados registros. Probá más tarde.',429);
-  // Registro público cerrado: la cuenta docente inicial requiere un código
-  // guardado exclusivamente como secreto de Cloudflare.
-  let role='student';
-  if(env.REGISTRATION_ENABLED!=='true'){
-    const provided=typeof b.inviteCode==='string'?b.inviteCode:'';
-    const expected=env.BOOTSTRAP_INVITE_CODE;
-    if(typeof expected!=='string'||expected.length<32||!constantTimeEqual(provided,expected))
-      return fail('Inscripciones cerradas. Se necesita un código de activación para la cuenta inicial.',403);
-    const existing=await env.DB.prepare('SELECT COUNT(*) AS n FROM users').bind().first();
-    if(Number(existing?.n||0)!==0)return fail('La cuenta inicial ya fue creada. El código no puede reutilizarse.',403);
-    role='admin';
+  const registrationClosed=env.REGISTRATION_ENABLED!=='true';
+  if(!await limit(env,req,registrationClosed?'bootstrap-register':'register',username,5,3600))
+    return fail('Demasiados intentos de registro. Probá más tarde.',429);
+  let role='student', invite=null;
+  if(registrationClosed){
+    const master=env.BOOTSTRAP_INVITE_CODE;
+    const bootstrap=typeof master==='string'&&master.length>=32&&constantTimeEqual(code,master);
+    if(bootstrap){
+      const existing=await env.DB.prepare('SELECT COUNT(*) AS n FROM users').bind().first();
+      if(Number(existing?.n||0)!==0)return fail('La activación inicial de administrador ya fue utilizada.',403);
+      role='admin';
+    }else if(env.INVITES_ENABLED==='true'&&await isValidInvite(env,code)){
+      invite=code;
+    }else{
+      return fail('Inscripciones cerradas. Solicitá un código de invitación válido al docente.',403);
+    }
   }
-  // No pedimos email sin tener un mecanismo de verificación y recuperación.
-  const salt=randomHex(16), passHash=await derivePassword(password,salt), id=crypto.randomUUID();
-  try {
-    const initial=role==='admin';
-    const sql=initial
-      ? `INSERT INTO users(id,username,display_name,password_hash,password_salt,password_iterations,role,created_at)
-         SELECT ?,?,?,?,?,?,'admin',? WHERE NOT EXISTS (SELECT 1 FROM users)`
-      : `INSERT INTO users(id,username,display_name,password_hash,password_salt,password_iterations,role,created_at)
-         VALUES(?,?,?,?,?,?,'student',?)`;
-    const inserted=await env.DB.prepare(sql).bind(id,username,display||username,passHash,salt,ITERATIONS,now()).run();
-    if(initial && Number(inserted?.meta?.changes??inserted?.changes??0)!==1)
-      return fail('La cuenta inicial ya fue creada. El código no puede reutilizarse.',403);
-  }catch(e){if(String(e).includes('UNIQUE'))return fail('Ese usuario ya existe.',409);throw e;}
+  const salt=randomHex(16),passHash=await derivePassword(password,salt),id=crypto.randomUUID();
+  try{
+    if(role==='admin'){
+      const inserted=await env.DB.prepare("INSERT INTO users(id,username,display_name,password_hash,password_salt,password_iterations,role,created_at) SELECT ?,?,?,?,?,?,'admin',? WHERE NOT EXISTS (SELECT 1 FROM users)")
+        .bind(id,username,display||username,passHash,salt,ITERATIONS,now()).run();
+      if(Number(inserted?.meta?.changes??inserted?.changes??0)!==1)return fail('La activación inicial ya fue utilizada.',403);
+    }else if(invite){
+      const ok=await redeemInvite(env,invite,{id,username,displayName:display||username,passwordHash:passHash,salt,iterations:ITERATIONS});
+      if(!ok)return fail('La invitación ya fue usada, revocada o venció.',403);
+    }else{
+      await env.DB.prepare("INSERT INTO users(id,username,display_name,password_hash,password_salt,password_iterations,role,created_at) VALUES(?,?,?,?,?,?,'student',?)")
+        .bind(id,username,display||username,passHash,salt,ITERATIONS,now()).run();
+    }
+  }catch(e){if(String(e).includes('UNIQUE'))return fail('Ese nombre de usuario ya existe.',409);throw e;}
   return reply({ok:true,user:{id,username,displayName:display||username,role}},201,{'Set-Cookie':await createSession(env,id)});
 }
 async function login(env,req) {
@@ -199,6 +201,42 @@ async function deleteAccount(env,req,u){const b=await body(req);
   ]);
   return reply({ok:true},200,{'Set-Cookie':cookie('',0)});
 }
+
+async function resetPasswordWithTeacherCode(env,req){
+  if(env.INVITES_ENABLED!=='true')return fail('Recuperación asistida no habilitada todavía.',503);
+  const b=await body(req),username=String(b.username||'').trim().toLowerCase();
+  const code=typeof b.recoveryCode==='string'?b.recoveryCode.trim():'';
+  if(!usernameOK(username)||typeof b.newPassword!=='string'||b.newPassword.length<12||b.newPassword.length>128)
+    return fail('Datos de recuperación inválidos.');
+  if(!await limit(env,req,'recover',username,5,900))return fail('Demasiados intentos de recuperación.',429);
+  const u=await env.DB.prepare("SELECT id FROM users WHERE username=? AND role='student'").bind(username).first();
+  if(!u||!await isValidRecovery(env,u.id,code))return fail('Código inválido, usado o vencido.',403);
+  const salt=randomHex(16),hash=await derivePassword(b.newPassword,salt);
+  const redeemed=await redeemRecovery(env,u.id,code,{salt,hash,iterations:ITERATIONS});
+  if(!redeemed)return fail('Código inválido, usado o vencido.',403);
+  return reply({ok:true,message:'Contraseña actualizada. Iniciá sesión nuevamente.'});
+}
+async function studentInvitesAdmin(env,req,u,path,method){
+  if(env.INVITES_ENABLED!=='true')return fail('El módulo de invitaciones aún no está habilitado. Falta aplicar su migración.',503);
+  if(u.role!=='admin')return fail('Acceso denegado.',403);
+  if(path==='/api/admin/invites'&&method==='GET')return reply({ok:true,invites:await listInvites(env)});
+  if(path==='/api/admin/invites'&&method==='POST'){
+    if(!await limit(env,req,'admin-create-invites',u.id,12,3600))return fail('Límite de generación de invitaciones alcanzado.',429);
+    const result=await issueInvites(env,u.id,await body(req));
+    return result.error?fail(result.error):reply({ok:true,...result},201);
+  }
+  if(path==='/api/admin/invites/revoke'&&method==='POST'){
+    const b=await body(req),ok=await revokeInvite(env,b.tokenHash);
+    return ok?reply({ok:true}):fail('Invitación inexistente o ya utilizada.',404);
+  }
+  if(path==='/api/admin/recovery-code'&&method==='POST'){
+    if(!await limit(env,req,'admin-recovery',u.id,10,3600))return fail('Límite de códigos de recuperación alcanzado.',429);
+    const b=await body(req),result=await issueRecovery(env,u.id,b.username);
+    return result.error?fail(result.error,404):reply({ok:true,...result},201);
+  }
+  return fail('Ruta inexistente.',404);
+}
+
 async function api(req,env){
   const url=new URL(req.url), path=url.pathname,method=req.method;
   if(path==='/api/health'&&method==='GET')return reply({ok:true,course:COURSE_ID});
@@ -206,6 +244,7 @@ async function api(req,env){
   if(!['GET','HEAD'].includes(method)&&!originOK(req))return fail('Origen no autorizado.',403);
   if(path==='/api/auth/register'&&method==='POST')return register(env,req);
   if(path==='/api/auth/login'&&method==='POST')return login(env,req);
+  if(path==='/api/auth/reset-password'&&method==='POST')return resetPasswordWithTeacherCode(env,req);
   const u=await session(env,req);
   if(path==='/api/auth/me'&&method==='GET')return reply({ok:true,user:u?{id:u.id,username:u.username,displayName:u.display_name,role:u.role}:null});
   if(path==='/api/auth/logout'&&method==='POST'){
@@ -213,6 +252,7 @@ async function api(req,env){
     return reply({ok:true},200,{'Set-Cookie':cookie('',0)});
   }
   if(!u)return fail('Iniciá sesión para usar esta función.',401);
+  if(path.startsWith('/api/admin/invites')||path==='/api/admin/recovery-code')return studentInvitesAdmin(env,req,u,path,method);
   if(path==='/api/progress'&&method==='GET')return getProgress(env,u);
   if(path==='/api/progress'&&method==='PUT')return putProgress(env,req,u);
   if(path==='/api/quiz/submit'&&method==='POST')return submitQuiz(env,req,u);
