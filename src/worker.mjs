@@ -1,5 +1,6 @@
 import { ANSWER_KEYS } from './quiz-keys.mjs';
 import {issueInvites,listInvites,revokeInvite,isValidInvite,redeemInvite,issueRecovery,isValidRecovery,redeemRecovery} from './student-access.mjs';
+import {validEmail,emailEnabled,backupEnabled,emailProfile,setPendingEmail,startVerification,verifyEmail,startEmailReset,completeEmailReset,generateBackupCodes,backupStatus,completeBackupReset} from './hybrid-recovery.mjs';
 
 const COOKIE = '__Host-lastlab_session';
 const COURSE_ID = 'fintech-blockchain-ia-2026';
@@ -76,6 +77,12 @@ async function register(env,req) {
   if(!usernameOK(username))return fail('Usuario: 3–30 caracteres, letras minúsculas, números, punto, guion o guion bajo.');
   if(typeof password!=='string'||password.length<12||password.length>128)return fail('La contraseña debe tener entre 12 y 128 caracteres.');
   if(display.length>80)return fail('El nombre visible no puede superar los 80 caracteres.');
+  const needsEmail=emailEnabled(env);
+  if(needsEmail){
+    if(!validEmail(b.email))return fail('Para registrarte, ingresá un correo electrónico válido.');
+    const used=await env.DB.prepare('SELECT user_id FROM account_emails WHERE email=?').bind(b.email.trim().toLowerCase()).first();
+    if(used)return fail('Ese correo electrónico ya está asociado a otra cuenta.',409);
+  }
   const registrationClosed=env.REGISTRATION_ENABLED!=='true';
   if(!await limit(env,req,registrationClosed?'bootstrap-register':'register',username,5,3600))
     return fail('Demasiados intentos de registro. Probá más tarde.',429);
@@ -107,7 +114,19 @@ async function register(env,req) {
         .bind(id,username,display||username,passHash,salt,ITERATIONS,now()).run();
     }
   }catch(e){if(String(e).includes('UNIQUE'))return fail('Ese nombre de usuario ya existe.',409);throw e;}
-  return reply({ok:true,user:{id,username,displayName:display||username,role}},201,{'Set-Cookie':await createSession(env,id)});
+  let emailVerificationSent=null;
+  if(needsEmail){
+    try{
+      await setPendingEmail(env,id,b.email);
+      await startVerification(env,id,new URL(req.url).origin);
+      emailVerificationSent=true;
+    }catch(e){
+      console.warn('LASTLab signup email delivery unavailable',String(e?.message||e));
+      emailVerificationSent=false;
+    }
+  }
+  return reply({ok:true,user:{id,username,displayName:display||username,role},
+    ...(needsEmail?{emailVerificationSent}:{} )},201,{'Set-Cookie':await createSession(env,id)});
 }
 async function login(env,req) {
   const b=await body(req),username=String(b.username||'').trim().toLowerCase();
@@ -237,6 +256,103 @@ async function studentInvitesAdmin(env,req,u,path,method){
   return fail('Ruta inexistente.',404);
 }
 
+
+const validNewPassword=p=>typeof p==='string'&&p.length>=12&&p.length<=128;
+async function passwordMaterial(p){
+  const salt=randomHex(16);
+  return {hash:await derivePassword(p,salt),salt,iterations:ITERATIONS};
+}
+async function verifyCurrentPassword(env,u,password){
+  if(typeof password!=='string')return false;
+  const record=await env.DB.prepare('SELECT password_hash,password_salt,password_iterations FROM users WHERE id=?').bind(u.id).first();
+  if(!record)return false;
+  return constantTimeEqual(await derivePassword(password,record.password_salt,record.password_iterations),record.password_hash);
+}
+async function hybridPublic(env,req,path){
+  const b=await body(req),origin=new URL(req.url).origin;
+  if(path==='/api/auth/verify-email'){
+    if(!emailEnabled(env))return fail('Verificación por correo no habilitada.',503);
+    if(!await limit(env,req,'verify-email','',15,900))return fail('Demasiados intentos.',429);
+    const ok=await verifyEmail(env,b.token);
+    return ok?reply({ok:true,message:'Correo verificado. Tu cuenta ya admite recuperación por email.'}):fail('Enlace inválido, vencido o ya utilizado.',403);
+  }
+  if(path==='/api/auth/email-reset/request'){
+    if(!emailEnabled(env))return fail('Recuperación por correo no habilitada todavía.',503);
+    const identifier=String(b.identifier||'').trim().toLowerCase();
+    if(identifier.length<3||identifier.length>254)return fail('Ingresá tu usuario o correo electrónico.');
+    if(!await limit(env,req,'email-reset-ip','',10,3600)
+        ||!await limit(env,req,'email-reset-request',identifier,3,3600))
+      return fail('Demasiadas solicitudes. Intentá más tarde.',429);
+    try{await startEmailReset(env,identifier,origin);}
+    catch(e){console.error('Email reset provider issue',String(e?.message||e));}
+    return reply({ok:true,message:'Si la cuenta tiene un correo verificado, recibirá un enlace para cambiar la contraseña.'});
+  }
+  if(path==='/api/auth/email-reset/complete'){
+    if(!emailEnabled(env))return fail('Recuperación por correo no habilitada.',503);
+    if(!validNewPassword(b.newPassword))return fail('La contraseña debe tener entre 12 y 128 caracteres.');
+    if(!await limit(env,req,'email-reset-confirm','',8,900))return fail('Demasiados intentos.',429);
+    const ok=await completeEmailReset(env,b.token,await passwordMaterial(b.newPassword));
+    return ok?reply({ok:true,message:'Contraseña actualizada. Iniciá sesión nuevamente.'}):fail('Enlace inválido, usado o vencido.',403);
+  }
+  if(path==='/api/auth/backup-reset'){
+    if(!backupEnabled(env))return fail('Códigos de respaldo no habilitados todavía.',503);
+    const username=String(b.username||'').trim().toLowerCase();
+    if(!usernameOK(username)||!validNewPassword(b.newPassword)||typeof b.code!=='string')
+      return fail('Datos de recuperación inválidos.');
+    if(!await limit(env,req,'backup-reset',username,5,900))return fail('Demasiados intentos de recuperación.',429);
+    const u=await env.DB.prepare('SELECT id FROM users WHERE username=?').bind(username).first();
+    if(!u)return fail('Código inválido o ya utilizado.',403);
+    const ok=await completeBackupReset(env,u.id,b.code.trim().toLowerCase(),await passwordMaterial(b.newPassword));
+    return ok?reply({ok:true,message:'Contraseña actualizada. Iniciá sesión nuevamente.'}):fail('Código inválido o ya utilizado.',403);
+  }
+  return fail('Ruta inexistente.',404);
+}
+async function hybridAccount(env,req,u,path,method){
+  if(path==='/api/account/email'){
+    if(!emailEnabled(env))return fail('Correo electrónico no configurado todavía.',503);
+    if(method==='GET')return reply({ok:true,...await emailProfile(env,u.id)});
+    if(method==='POST'){
+      if(!await limit(env,req,'set-email',u.username,5,3600))return fail('Demasiados cambios de correo.',429);
+      const b=await body(req);
+      if(!validEmail(b.email))return fail('Correo electrónico inválido.');
+      if(!await verifyCurrentPassword(env,u,b.password))return fail('Contraseña actual incorrecta.',403);
+      try{
+        const mail=await setPendingEmail(env,u.id,b.email);
+        const result=await startVerification(env,u.id,new URL(req.url).origin);
+        return reply({ok:true,email:mail,verified:!!result.alreadyVerified,
+          message:result.alreadyVerified?'Correo previamente verificado.':'Revisá tu correo y utilizá el enlace de verificación.'});
+      }catch(e){
+        if(String(e).includes('UNIQUE'))return fail('Ese correo ya está asociado a otra cuenta.',409);
+        console.error('LASTLab account email issue',String(e?.message||e));
+        return fail('No se pudo enviar el correo de verificación. Revisá el servicio y volvé a intentarlo.',502);
+      }
+    }
+  }
+  if(path==='/api/account/email/resend'&&method==='POST'){
+    if(!emailEnabled(env))return fail('Correo no configurado todavía.',503);
+    if(!await limit(env,req,'resend-verify',u.username,3,3600))return fail('Esperá antes de solicitar otro correo.',429);
+    try{
+      const result=await startVerification(env,u.id,new URL(req.url).origin);
+      return result.error?fail(result.error):reply({ok:true,message:result.alreadyVerified?'El correo ya estaba verificado.':'Enviamos otro enlace de verificación.'});
+    }catch(e){
+      console.error('LASTLab email resend issue',String(e?.message||e));
+      return fail('No se pudo enviar el correo. Intentá más tarde.',502);
+    }
+  }
+  if(path==='/api/account/backup-codes'){
+    if(!backupEnabled(env))return fail('Códigos personales no habilitados todavía.',503);
+    if(method==='GET')return reply({ok:true,remaining:await backupStatus(env,u.id)});
+    if(method==='POST'){
+      if(!await limit(env,req,'create-backup-codes',u.username,3,3600))return fail('Demasiadas regeneraciones de códigos.',429);
+      const b=await body(req);
+      if(!await verifyCurrentPassword(env,u,b.password))return fail('Contraseña actual incorrecta.',403);
+      const codes=await generateBackupCodes(env,u.id);
+      return reply({ok:true,codes,remaining:codes.length,message:'Guardá los códigos en un lugar seguro. Los anteriores dejaron de funcionar.'},201);
+    }
+  }
+  return fail('Ruta inexistente.',404);
+}
+
 async function api(req,env){
   const url=new URL(req.url), path=url.pathname,method=req.method;
   if(path==='/api/health'&&method==='GET')return reply({ok:true,course:COURSE_ID});
@@ -244,6 +360,9 @@ async function api(req,env){
   if(!['GET','HEAD'].includes(method)&&!originOK(req))return fail('Origen no autorizado.',403);
   if(path==='/api/auth/register'&&method==='POST')return register(env,req);
   if(path==='/api/auth/login'&&method==='POST')return login(env,req);
+  if(path==='/api/auth/features'&&method==='GET')return reply({ok:true,emailRecovery:emailEnabled(env),backupRecovery:backupEnabled(env)});
+  if(method==='POST'&&(path==='/api/auth/verify-email'||path==='/api/auth/email-reset/request'||path==='/api/auth/email-reset/complete'||path==='/api/auth/backup-reset'))
+    return hybridPublic(env,req,path);
   if(path==='/api/auth/reset-password'&&method==='POST')return resetPasswordWithTeacherCode(env,req);
   const u=await session(env,req);
   if(path==='/api/auth/me'&&method==='GET')return reply({ok:true,user:u?{id:u.id,username:u.username,displayName:u.display_name,role:u.role}:null});
@@ -252,6 +371,8 @@ async function api(req,env){
     return reply({ok:true},200,{'Set-Cookie':cookie('',0)});
   }
   if(!u)return fail('Iniciá sesión para usar esta función.',401);
+  if(path==='/api/account/email'||path==='/api/account/email/resend'||path==='/api/account/backup-codes')
+    return hybridAccount(env,req,u,path,method);
   if(path.startsWith('/api/admin/invites')||path==='/api/admin/recovery-code')return studentInvitesAdmin(env,req,u,path,method);
   if(path==='/api/progress'&&method==='GET')return getProgress(env,u);
   if(path==='/api/progress'&&method==='PUT')return putProgress(env,req,u);
