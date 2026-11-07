@@ -34,15 +34,32 @@
   button.addEventListener('click',open);dialog.querySelector('#accountClose').addEventListener('click',close);
   dialog.addEventListener('click',e=>{if(e.target===dialog)close()});
   function formMarkup(){
-    const login=loginTab==='login',register=loginTab==='register',recover=loginTab==='recover';
-    return '<div class="tabset"><button type="button" data-tab="login" class="'+(login?'active':'')+'">Ingresar</button><button type="button" data-tab="register" class="'+(register?'active':'')+'">Crear usuario</button><button type="button" data-tab="recover" class="'+(recover?'active':'')+'">Recuperar</button></div>'
-    +'<p>'+(recover?'Si olvidaste la contraseña, solicitá al docente un código de recuperación de un solo uso. No se envía correo automáticamente.':register?'Para guardar el avance necesitás una invitación individual del docente.':'Ingresá con tu usuario y contraseña para recuperar tu avance.')+'</p>'
-    +'<form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required placeholder="ejemplo: estudiante_01"></div>'
-    +(register?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div><div class="row"><label for="inviteInput">Código individual de invitación</label><input id="inviteInput" name="inviteCode" type="password" autocomplete="off" required><small id="inviteLength">Longitud del código: 0 caracteres</small><small>Los códigos se entregan por el docente y solo pueden utilizarse una vez.</small></div>':'')
-    +(recover?'<div class="row"><label for="recoveryInput">Código de recuperación del docente</label><input id="recoveryInput" name="recoveryCode" type="password" autocomplete="off" required minlength="64" maxlength="64"></div>':'')
-    +'<div class="row"><label for="passInput">'+(recover?'Contraseña nueva': 'Contraseña')+' (mínimo 12 caracteres)</label><input type="password" id="passInput" name="'+(recover?'newPassword':'password')+'" autocomplete="'+(login?'current-password':'new-password')+'" required minlength="'+(login?'1':'12')+'" maxlength="128"></div>'
-    +'<button class="primary" type="submit">'+(recover?'Restablecer contraseña':register?'Crear mi cuenta':'Iniciar sesión')+'</button></form>'
-    +'<div class="notice" id="accountNotice" hidden></div><p class="hint">En esta versión no se solicitan correos electrónicos. El docente administra las invitaciones y las recuperaciones de alumnos.</p>';
+    const login=loginTab==='login',register=loginTab==='register',recover=loginTab==='recover',link=loginTab==='emailLink';
+    const tabs='<div class="tabset"><button type="button" data-tab="login" class="'+(login?'active':'')+'">Ingresar</button><button type="button" data-tab="register" class="'+(register?'active':'')+'">Crear usuario</button><button type="button" data-tab="recover" class="'+(recover||link?'active':'')+'">Recuperar</button></div>';
+    const noticeHtml='<div class="notice" id="accountNotice" hidden></div>';
+    if(link)return tabs+'<p>Elegí una contraseña nueva para completar la recuperación por correo.</p><form id="accountForm"><div class="row"><label for="newPass">Nueva contraseña (12 caracteres como mínimo)</label><input id="newPass" name="newPassword" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></div><button class="primary" type="submit">Guardar nueva contraseña</button></form>'+noticeHtml;
+    if(recover){
+      const chosen=recoveryMode==='email'&&!recoveryFeatures.emailRecovery?'teacher':recoveryMode==='backup'&&!recoveryFeatures.backupRecovery?'teacher':recoveryMode;
+      const choices='<div class="recovery-choices">'
+        +(recoveryFeatures.emailRecovery?'<button type="button" data-recovery="email" class="'+(chosen==='email'?'active':'')+'">Por correo</button>':'')
+        +(recoveryFeatures.backupRecovery?'<button type="button" data-recovery="backup" class="'+(chosen==='backup'?'active':'')+'">Código personal</button>':'')
+        +'<button type="button" data-recovery="teacher" class="'+(chosen==='teacher'?'active':'')+'">Ayuda docente</button></div>';
+      const fields=chosen==='email'
+        ?'<div class="row"><label for="identityInput">Usuario o correo verificado</label><input id="identityInput" name="identifier" required autocomplete="username"></div>'
+        :'<div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" required maxlength="30" autocomplete="username"></div>'
+          +'<div class="row"><label for="recoveryInput">'+(chosen==='backup'?'Uno de tus códigos personales':'Código entregado por el docente')+'</label><input id="recoveryInput" name="'+(chosen==='backup'?'code':'recoveryCode')+'" type="password" required autocomplete="off" maxlength="64"></div>'
+          +'<div class="row"><label for="passInput">Nueva contraseña (mínimo 12 caracteres)</label><input type="password" id="passInput" name="newPassword" autocomplete="new-password" required minlength="12" maxlength="128"></div>';
+      return tabs+'<p>'+(chosen==='email'?'Te enviaremos un enlace temporal, siempre que el correo de la cuenta esté verificado.':chosen==='backup'?'Usá un código personal que hayas guardado previamente.':'Solicitá al docente un código temporal de recuperación.')+'</p>'+choices
+        +'<form id="accountForm">'+fields+'<button class="primary" type="submit">'+(chosen==='email'?'Solicitar enlace de recuperación':'Restablecer contraseña')+'</button></form>'+noticeHtml;
+    }
+    return tabs+'<p>'+(register?'Para conservar tu avance necesitás una invitación individual del docente.':'Ingresá con tu usuario y contraseña.')+'</p>'
+      +'<form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required></div>'
+      +(register?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div>'
+        +(recoveryFeatures.emailRecovery?'<div class="row"><label for="registerEmail">Correo para recuperar tu cuenta (se verificará)</label><input id="registerEmail" name="email" type="email" autocomplete="email" maxlength="254" required></div>':'')
+        +'<div class="row"><label for="inviteInput">Código individual de invitación</label><input id="inviteInput" name="inviteCode" type="password" autocomplete="off" required><small id="inviteLength">Longitud del código: 0 caracteres</small></div>':'')
+      +'<div class="row"><label for="passInput">Contraseña (mínimo 12 caracteres)</label><input type="password" id="passInput" name="password" autocomplete="'+(login?'current-password':'new-password')+'" required minlength="'+(login?'1':'12')+'" maxlength="128"></div>'
+      +'<button class="primary" type="submit">'+(register?'Crear mi cuenta':'Iniciar sesión')+'</button></form>'+noticeHtml
+      +'<p class="hint">'+(recoveryFeatures.emailRecovery?'El correo se usa para verificar la identidad y recuperar el acceso.':'El envío autónomo por correo se habilitará al configurar Resend.')+'</p>';
   }
   function adminMarkup(){return '<div class="admin-tools"><section class="admin-section">'
     +'<h3>Seguimiento de estudiantes</h3><div class="controls"><button type="button" class="secondary" id="adminLoad">Consultar progreso de estudiantes</button><button type="button" class="secondary" id="adminCSV" disabled>Exportar CSV</button></div><div id="adminResult" class="table-wrap"></div>'
