@@ -162,6 +162,53 @@
     $('#back').onclick=render;
     $('#passwordForm').onsubmit=async e=>{e.preventDefault();let b=Object.fromEntries(new FormData(e.currentTarget));try{await request('/api/auth/change-password',{method:'POST',body:JSON.stringify(b)});user=null;bridge?.applyRemote({});refreshUI();render();notice('Contraseña actualizada. Iniciá sesión nuevamente.')}catch(err){notice(err.message,true)}};
   }
+  async function loadHybridAccount(){
+    const host=$('#hybridAccount');if(!host)return;
+    if(!recoveryFeatures.emailRecovery&&!recoveryFeatures.backupRecovery){host.hidden=true;return;}
+    host.hidden=false;
+    host.innerHTML='<div class="admin-section recovery-panel"><h3>Recuperación autónoma</h3>'
+      +(recoveryFeatures.emailRecovery?'<div id="emailStatus" class="hint">Consultando correo…</div>'
+        +'<form id="emailForm"><div class="row"><label for="profileEmail">Correo electrónico</label><input id="profileEmail" type="email" name="email" maxlength="254" autocomplete="email" required></div>'
+        +'<div class="row"><label for="profilePass">Contraseña actual (para asociar o cambiar el correo)</label><input id="profilePass" type="password" name="password" autocomplete="current-password" required></div>'
+        +'<button type="submit" class="secondary">Guardar y verificar correo</button></form>'
+        +'<button type="button" id="resendEmail" class="secondary">Reenviar verificación</button>':'')
+      +(recoveryFeatures.backupRecovery?'<div id="backupStatus" class="hint">Consultando códigos…</div>'
+        +'<p class="hint">Los códigos personales sirven sin correo, una sola vez cada uno. Guardalos fuera del campus.</p>'
+        +'<form id="backupForm"><div class="row"><label for="backupPass">Contraseña actual</label><input id="backupPass" type="password" name="password" autocomplete="current-password" required></div>'
+        +'<button type="submit" class="secondary">Crear o reemplazar mis ocho códigos</button></form>'
+        +'<div id="newBackupCodes" hidden><label for="backupOutput">Códigos nuevos (guardalos ahora)</label><textarea id="backupOutput" readonly rows="6"></textarea><button type="button" class="secondary" id="copyBackup">Copiar códigos</button></div>':'')
+      +'</div>';
+    if(recoveryFeatures.emailRecovery){
+      try{const p=await request('/api/account/email');if(!$('#emailStatus'))return;
+        $('#emailStatus').textContent=p.email?(p.verified?'Correo verificado: ':'Correo pendiente de verificación: ')+p.email:'Todavía no registraste un correo.';
+        if(p.email)$('#profileEmail').value=p.email;
+      }catch(err){if($('#emailStatus'))$('#emailStatus').textContent=err.message;}
+      const form=$('#emailForm');if(form)form.onsubmit=async e=>{
+        e.preventDefault();const btn=form.querySelector('[type=submit]');btn.disabled=true;
+        try{const d=await request('/api/account/email',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});
+          await loadHybridAccount();notice(d.message);
+        }catch(err){notice(err.message,true)}finally{btn.disabled=false;}
+      };
+      const resend=$('#resendEmail');if(resend)resend.onclick=async()=>{
+        resend.disabled=true;
+        try{const d=await request('/api/account/email/resend',{method:'POST',body:'{}'});notice(d.message);}
+        catch(err){notice(err.message,true)}finally{resend.disabled=false;}
+      };
+    }
+    if(recoveryFeatures.backupRecovery){
+      try{const status=await request('/api/account/backup-codes');if($('#backupStatus'))$('#backupStatus').textContent='Códigos sin usar: '+status.remaining;}
+      catch(err){if($('#backupStatus'))$('#backupStatus').textContent=err.message;}
+      const form=$('#backupForm');if(form)form.onsubmit=async e=>{
+        e.preventDefault();const btn=form.querySelector('[type=submit]');btn.disabled=true;
+        try{const d=await request('/api/account/backup-codes',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});
+          const box=$('#newBackupCodes');box.hidden=false;$('#backupOutput').value=d.codes.join('\n');form.reset();
+          $('#backupStatus').textContent='Códigos sin usar: '+d.remaining;
+          notice('Guardá los códigos ahora. Los anteriores dejaron de funcionar.');
+        }catch(err){notice(err.message,true)}finally{btn.disabled=false;}
+      };
+      const copy=$('#copyBackup');if(copy)copy.onclick=()=>copySecret($('#backupOutput').value);
+    }
+  }
   let exportRows=[];
   async function copySecret(value){
     if(!value)return;
