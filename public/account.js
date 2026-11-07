@@ -31,32 +31,58 @@
   function close(){if(dialog.open)dialog.close();}
   button.addEventListener('click',open);dialog.querySelector('#accountClose').addEventListener('click',close);
   dialog.addEventListener('click',e=>{if(e.target===dialog)close()});
-  function formMarkup(){return `<div class="tabset"><button type="button" data-tab="login" class="${loginTab==='login'?'active':''}">Ingresar</button><button type="button" data-tab="register" class="${loginTab==='register'?'active':''}">Crear usuario</button></div>
-    <p>${loginTab==='login'?'Ingresá con tu usuario y contraseña para recuperar tu avance.':'Creá una cuenta para conservar tus evaluaciones y actividades aunque cambies de dispositivo.'}</p>
-    <form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required placeholder="ejemplo: estudiante_01"></div>
-    ${loginTab==='register'?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div><div class="row"><label for="inviteInput">Código de activación (solo cuenta inicial)</label><input id="inviteInput" type="password" name="inviteCode" autocomplete="off" placeholder="Solo si las inscripciones están cerradas"><small id="inviteLength">Longitud del código: 0 caracteres</small><small>Este código es diferente de la contraseña. No se comparte ni se guarda en el navegador.</small></div>':''}
-    <div class="row"><label for="passInput">Contraseña (mínimo 12 caracteres)</label><input type="password" id="passInput" name="password" autocomplete="${loginTab==='login'?'current-password':'new-password'}" required minlength="${loginTab==='login'?1:12}" maxlength="128"></div>
-    <button class="primary" type="submit">${loginTab==='login'?'Iniciar sesión':'Crear mi cuenta'}</button></form>
-    <div class="notice" id="accountNotice" hidden></div><p class="hint">En esta primera versión no solicitamos correo electrónico. Guardá tu contraseña: la recuperación automática todavía no está habilitada.</p>`;}
-  function adminMarkup(){return `<p class="muted">Cuenta docente · <b>${esc(user.username)}</b></p><div class="controls"><button type="button" class="secondary" id="adminLoad">Consultar progreso de estudiantes</button><button type="button" class="secondary" id="adminCSV" disabled>Exportar CSV</button></div><div id="adminResult" class="table-wrap"></div>`;}
+  function formMarkup(){
+    const login=loginTab==='login',register=loginTab==='register',recover=loginTab==='recover';
+    return '<div class="tabset"><button type="button" data-tab="login" class="'+(login?'active':'')+'">Ingresar</button><button type="button" data-tab="register" class="'+(register?'active':'')+'">Crear usuario</button><button type="button" data-tab="recover" class="'+(recover?'active':'')+'">Recuperar</button></div>'
+    +'<p>'+(recover?'Si olvidaste la contraseña, solicitá al docente un código de recuperación de un solo uso. No se envía correo automáticamente.':register?'Para guardar el avance necesitás una invitación individual del docente.':'Ingresá con tu usuario y contraseña para recuperar tu avance.')+'</p>'
+    +'<form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required placeholder="ejemplo: estudiante_01"></div>'
+    +(register?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div><div class="row"><label for="inviteInput">Código individual de invitación</label><input id="inviteInput" name="inviteCode" type="password" autocomplete="off" required><small id="inviteLength">Longitud del código: 0 caracteres</small><small>Los códigos se entregan por el docente y solo pueden utilizarse una vez.</small></div>':'')
+    +(recover?'<div class="row"><label for="recoveryInput">Código de recuperación del docente</label><input id="recoveryInput" name="recoveryCode" type="password" autocomplete="off" required minlength="64" maxlength="64"></div>':'')
+    +'<div class="row"><label for="passInput">'+(recover?'Contraseña nueva': 'Contraseña')+' (mínimo 12 caracteres)</label><input type="password" id="passInput" name="'+(recover?'newPassword':'password')+'" autocomplete="'+(login?'current-password':'new-password')+'" required minlength="'+(login?'1':'12')+'" maxlength="128"></div>'
+    +'<button class="primary" type="submit">'+(recover?'Restablecer contraseña':register?'Crear mi cuenta':'Iniciar sesión')+'</button></form>'
+    +'<div class="notice" id="accountNotice" hidden></div><p class="hint">En esta versión no se solicitan correos electrónicos. El docente administra las invitaciones y las recuperaciones de alumnos.</p>';
+  }
+  function adminMarkup(){return '<div class="admin-tools"><section class="admin-section">'
+    +'<h3>Seguimiento de estudiantes</h3><div class="controls"><button type="button" class="secondary" id="adminLoad">Consultar progreso de estudiantes</button><button type="button" class="secondary" id="adminCSV" disabled>Exportar CSV</button></div><div id="adminResult" class="table-wrap"></div>'
+    +'</section><section class="admin-section"><h3>Invitar estudiantes</h3><p class="hint">Generá códigos de un solo uso, válidos por 7 días. Cada estudiante recibe uno distinto. El código solo se muestra al generarlo.</p>'
+    +'<form id="invitesForm"><div class="admin-grid"><div class="row"><label for="inviteCount">Cantidad (1–20)</label><input id="inviteCount" name="count" type="number" min="1" max="20" value="1" required></div><div class="row"><label for="inviteLabel">Referencia del grupo</label><input id="inviteLabel" name="label" maxlength="80" placeholder="Curso de noviembre"></div></div><button class="primary" type="submit">Generar invitaciones</button></form>'
+    +'<div id="invitesCreated" hidden><label for="inviteCodes">Códigos recién generados · copiá y guardá ahora</label><textarea id="inviteCodes" readonly rows="4"></textarea><button type="button" class="secondary" id="copyInvites">Copiar códigos</button></div>'
+    +'<div class="controls"><button type="button" class="secondary" id="adminListInvites">Ver invitaciones y revocar</button></div><div id="adminInvitesResult" class="table-wrap"></div>'
+    +'</section><section class="admin-section"><h3>Recuperación asistida</h3><p class="hint">Confirmá la identidad del alumno por fuera de esta web antes de entregarle el código. El código vence en 30 minutos y no sirve para cambiar cuentas docentes.</p>'
+    +'<form id="resetIssueForm"><div class="row"><label for="resetStudent">Usuario del estudiante</label><input id="resetStudent" name="username" maxlength="30" required></div><button class="secondary" type="submit">Generar código de recuperación</button></form>'
+    +'<div id="recoveryCreated" hidden><label for="resetCodeOutput">Código recién generado · copialo ahora</label><input id="resetCodeOutput" readonly><button type="button" class="secondary" id="copyReset">Copiar código</button></div>'
+    +'</section></div>';}
   function render(){
-    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite){invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});}return;}
+    dialog.classList.toggle('admin-view',Boolean(user&&user.role==='admin'));
+    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite)invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});return;}
     slot.innerHTML=`<p>Sesión iniciada como <b>${esc(user.displayName||user.username)}</b>. Tu avance se guarda en Cloudflare D1 y puede recuperarse desde otros dispositivos.</p>
     <div class="controls"><button class="primary" id="logout">Cerrar sesión</button><button class="secondary" id="passwordChange">Cambiar contraseña</button></div>
     <div class="notice" id="accountNotice" hidden></div>${user.role==='admin'?adminMarkup():''}
     <p class="hint">Privacidad: conservamos el nombre de usuario, el avance y los intentos de evaluación. No se piden documentos ni datos financieros.</p>`;
     $('#logout').onclick=logout;
     $('#passwordChange').onclick=changePasswordForm;
-    if(user.role==='admin')$('#adminLoad').onclick=loadAdmin;
+    if(user.role==='admin'){
+      $('#adminLoad').onclick=loadAdmin;
+      $('#invitesForm').onsubmit=issueInvitesFromPanel;
+      $('#adminListInvites').onclick=loadInvitesFromPanel;
+      $('#resetIssueForm').onsubmit=issueRecoveryFromPanel;
+      $('#copyInvites').onclick=()=>copySecret($('#inviteCodes').value);
+      $('#copyReset').onclick=()=>copySecret($('#resetCodeOutput').value);
+    }
   }
   async function onSubmit(e){
-    e.preventDefault();const form=e.currentTarget;const values=Object.fromEntries(new FormData(form));
-    if(loginTab==='register' && values.inviteCode && values.inviteCode.length<32){notice('El código de activación es demasiado corto. Debe tener al menos 32 caracteres; se recomendaron 64. No se envió ningún intento al servidor.',true);return;}
+    e.preventDefault();const form=e.currentTarget,values=Object.fromEntries(new FormData(form));
+    if(loginTab==='register' && String(values.inviteCode||'').length<32){notice('El código tiene que tener al menos 32 caracteres. No se envió ninguna solicitud.',true);return;}
     notice('Conectando con el campus…');
     const submit=form.querySelector('[type=submit]');submit.disabled=true;
     try{
-      const data=await request('/api/auth/'+(loginTab==='login'?'login':'register'),{method:'POST',body:JSON.stringify(values)});
-      user=data.user;await restoreProgress();refreshUI();render();notice('Sesión iniciada. Tu progreso está sincronizado.');
+      if(loginTab==='recover'){
+        const data=await request('/api/auth/reset-password',{method:'POST',body:JSON.stringify(values)});
+        loginTab='login';render();notice(data.message||'Contraseña actualizada. Iniciá sesión nuevamente.');
+      }else{
+        const data=await request('/api/auth/'+(loginTab==='login'?'login':'register'),{method:'POST',body:JSON.stringify(values)});
+        user=data.user;await restoreProgress();refreshUI();render();notice('Sesión iniciada. Tu progreso está sincronizado.');
+      }
     }catch(err){notice(err.message,true)}finally{submit.disabled=false;}
   }
   async function restoreProgress(){
@@ -102,6 +128,50 @@
     $('#passwordForm').onsubmit=async e=>{e.preventDefault();let b=Object.fromEntries(new FormData(e.currentTarget));try{await request('/api/auth/change-password',{method:'POST',body:JSON.stringify(b)});user=null;bridge?.applyRemote({});refreshUI();render();notice('Contraseña actualizada. Iniciá sesión nuevamente.')}catch(err){notice(err.message,true)}};
   }
   let exportRows=[];
+  async function copySecret(value){
+    if(!value)return;
+    try{await navigator.clipboard.writeText(value);notice('Código copiado. Compartilo únicamente con su destinatario.');}
+    catch{notice('No se pudo copiar automáticamente. Seleccioná el código y copialo manualmente.',true);}
+  }
+  async function issueInvitesFromPanel(e){
+    e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]');
+    button.disabled=true;notice('Generando códigos de invitación…');
+    try{
+      const data=await request('/api/admin/invites',{method:'POST',body:JSON.stringify({count:Number(form.count.value),label:form.label.value})});
+      const box=$('#invitesCreated');box.hidden=false;
+      $('#inviteCodes').value=data.codes.join('\n');
+      notice(data.codes.length+' invitación(es) generada(s). Copiá los códigos ahora: no se pueden consultar después.');
+      await loadInvitesFromPanel(true);
+    }catch(err){notice(err.message,true)}finally{button.disabled=false;}
+  }
+  async function loadInvitesFromPanel(silent=false){
+    try{
+      if(!silent)notice('Consultando invitaciones…');
+      const data=await request('/api/admin/invites');
+      const rows=data.invites||[],container=$('#adminInvitesResult');
+      container.innerHTML='<table class="invites-table"><thead><tr><th>Referencia</th><th>Creada</th><th>Estado</th><th>Acción</th></tr></thead><tbody>'
+        +rows.map(r=>{
+          const status=r.revoked_at?'Revocada':r.redeemed_at?'Usada':r.expires_at<Math.floor(Date.now()/1000)?'Vencida':'Disponible';
+          const date=new Date(r.created_at*1000).toLocaleDateString('es');
+          return '<tr><td>'+esc(r.label||'Sin referencia')+'</td><td>'+esc(date)+'</td><td>'+status+'</td><td>'+(status==='Disponible'?'<button class="secondary revoke-invite" data-hash="'+esc(r.token_hash)+'">Revocar</button>':'—')+'</td></tr>';
+        }).join('')+'</tbody></table>';
+      container.querySelectorAll('.revoke-invite').forEach(button=>button.onclick=async()=>{
+        if(!confirm('¿Revocar esta invitación? No podrá utilizarse.'))return;
+        try{await request('/api/admin/invites/revoke',{method:'POST',body:JSON.stringify({tokenHash:button.dataset.hash})});await loadInvitesFromPanel(true);notice('Invitación revocada.');}
+        catch(err){notice(err.message,true);}
+      });
+      if(!silent)notice(rows.length+' invitación(es) registradas.');
+    }catch(err){notice(err.message,true);}
+  }
+  async function issueRecoveryFromPanel(e){
+    e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]');
+    button.disabled=true;notice('Creando código de recuperación…');
+    try{
+      const data=await request('/api/admin/recovery-code',{method:'POST',body:JSON.stringify({username:form.username.value})});
+      $('#recoveryCreated').hidden=false;$('#resetCodeOutput').value=data.code;
+      notice('Código de recuperación de '+data.username+' creado. Vence en 30 minutos; entregalo solo tras confirmar su identidad.');
+    }catch(err){notice(err.message,true)}finally{button.disabled=false;}
+  }
   async function loadAdmin(){
     try{notice('Consultando resultados…');const result=await request('/api/admin/students');exportRows=result.students;
       $('#adminResult').innerHTML=`<table><thead><tr><th>Usuario</th><th>Nombre visible</th><th>Unidades</th><th>Intentos</th><th>Promedio</th></tr></thead><tbody>${exportRows.map(r=>`<tr><td>${esc(r.username)}</td><td>${esc(r.display_name)}</td><td>${r.completed}/10</td><td>${r.quiz_attempts}</td><td>${r.avg_quiz_percent??'—'}%</td></tr>`).join('')}</tbody></table>`;
