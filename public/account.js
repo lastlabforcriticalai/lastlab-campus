@@ -52,8 +52,8 @@
       return tabs+'<p>'+(chosen==='email'?'Te enviaremos un enlace temporal, siempre que el correo de la cuenta esté verificado.':chosen==='backup'?'Usá un código personal que hayas guardado previamente.':'Solicitá al docente un código temporal de recuperación.')+'</p>'+choices
         +'<form id="accountForm">'+fields+'<button class="primary" type="submit">'+(chosen==='email'?'Solicitar enlace de recuperación':'Restablecer contraseña')+'</button></form>'+noticeHtml;
     }
-    return tabs+'<p>'+(register?'Para conservar tu avance necesitás una invitación individual del docente.':'Ingresá con tu usuario y contraseña.')+'</p>'
-      +'<form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required></div>'
+    return tabs+'<p>'+(register?'Para conservar tu avance necesitás una invitación individual del docente.':'Ingresá con tu nombre de usuario o correo electrónico verificado y tu contraseña.')+'</p>'
+      +'<form id="accountForm"><div class="row"><label for="userInput">'+(register?'Nombre de usuario':'Usuario o correo verificado')+'</label><input id="userInput" name="username" '+(register?'maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}"':'maxlength="254" minlength="3"')+' autocomplete="username" required></div>'
       +(register?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div>'
         +(recoveryFeatures.emailRecovery?'<div class="row"><label for="registerEmail">Correo para recuperar tu cuenta (se verificará)</label><input id="registerEmail" name="email" type="email" autocomplete="email" maxlength="254" required></div>':'')
         +'<div class="row"><label for="inviteInput">Código individual de invitación</label><input id="inviteInput" name="inviteCode" type="password" autocomplete="off" required><small id="inviteLength">Longitud del código: 0 caracteres</small></div>':'')

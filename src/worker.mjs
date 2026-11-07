@@ -129,12 +129,20 @@ async function register(env,req) {
     ...(needsEmail?{emailVerificationSent}:{} )},201,{'Set-Cookie':await createSession(env,id)});
 }
 async function login(env,req) {
-  const b=await body(req),username=String(b.username||'').trim().toLowerCase();
-  if(!usernameOK(username)||typeof b.password!=='string')return fail('Credenciales incorrectas.',401);
-  if(!await limit(env,req,'login',username,12,900))return fail('Demasiados intentos. Esperá 15 minutos.',429);
-  const u=await env.DB.prepare(`SELECT id,username,display_name,password_hash,password_salt,password_iterations,role FROM users WHERE username=?`)
-    .bind(username).first();
-  // A PBKDF2 calculation on absent accounts makes user-existence timing less distinctive.
+  const b=await body(req),identity=String(b.username||'').trim().toLowerCase();
+  const byUsername=usernameOK(identity),byEmail=validEmail(identity);
+  if((!byUsername&&!byEmail)||typeof b.password!=='string')return fail('Credenciales incorrectas.',401);
+  if(!await limit(env,req,'login',identity,12,900))return fail('Demasiados intentos. Esperá 15 minutos.',429);
+  // El correo solamente es un identificador de acceso después de verificarlo.
+  // Conservamos siempre el ingreso con username para cuentas anteriores.
+  const u=byUsername
+    ?await env.DB.prepare(`SELECT id,username,display_name,password_hash,password_salt,password_iterations,role FROM users WHERE username=?`)
+      .bind(identity).first()
+    :await env.DB.prepare(`SELECT u.id,u.username,u.display_name,u.password_hash,u.password_salt,u.password_iterations,u.role
+        FROM users u JOIN account_emails e ON e.user_id=u.id
+        WHERE e.email=? AND e.verified_at IS NOT NULL`)
+      .bind(identity).first();
+  // No revelar si el nombre o correo existe a través del mensaje o el tiempo de PBKDF2.
   const salt=u?.password_salt||'0'.repeat(32), hash=await derivePassword(b.password,salt,u?.password_iterations||ITERATIONS);
   if(!u||!constantTimeEqual(u.password_hash,hash))return fail('Credenciales incorrectas.',401);
   return reply({ok:true,user:{id:u.id,username:u.username,displayName:u.display_name,role:u.role}},200,
