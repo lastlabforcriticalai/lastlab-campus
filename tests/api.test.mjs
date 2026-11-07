@@ -50,3 +50,21 @@ test('inscripción desactivada por defecto en despliegues de prueba',async()=>{
  const r=await call(env,'/api/auth/register',{method:'POST',body:{username:'prueba123',password:'contraseñaLargaDePrueba123'}});
  assert.equal(r.status,403);
 });
+
+
+test('bootstrap: primera cuenta docente con código privado y registro público cerrado',async()=>{
+ const env=makeEnv();env.REGISTRATION_ENABLED='false';env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ let r=await call(env,'/api/auth/register',{method:'POST',body:{username:'primero',password:'contrasenaDePrueba2026!',inviteCode:'codigo-invalido'}});
+ assert.equal(r.status,403);
+ r=await call(env,'/api/auth/register',{method:'POST',body:{username:'primero',displayName:'Docente Inicial',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,201);assert.equal(r.data.user.role,'admin');
+ r=await call(env,'/api/admin/students',{sessionCookie:r.cookie});assert.equal(r.status,200);
+ r=await call(env,'/api/auth/register',{method:'POST',body:{username:'segundo',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,403);
+});
+
+test('código bootstrap no da rol docente cuando inscripciones públicas están abiertas',async()=>{
+ const env=makeEnv();env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ const r=await call(env,'/api/auth/register',{method:'POST',body:{username:'alumno_03',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,201);assert.equal(r.data.user.role,'student');
+});
