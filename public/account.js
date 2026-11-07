@@ -137,7 +137,7 @@
     e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]');
     button.disabled=true;notice('Generando códigos de invitación…');
     try{
-      const data=await request('/api/admin/invites',{method:'POST',body:JSON.stringify({count:Number(form.count.value),label:form.label.value})});
+      const data=await request('/api/admin/invites',{method:'POST',body:JSON.stringify({count:Number(form.elements.namedItem('count').value),label:form.elements.namedItem('label').value})});
       const box=$('#invitesCreated');box.hidden=false;
       $('#inviteCodes').value=data.codes.join('\n');
       notice(data.codes.length+' invitación(es) generada(s). Copiá los códigos ahora: no se pueden consultar después.');
@@ -167,7 +167,7 @@
     e.preventDefault();const form=e.currentTarget,button=form.querySelector('[type=submit]');
     button.disabled=true;notice('Creando código de recuperación…');
     try{
-      const data=await request('/api/admin/recovery-code',{method:'POST',body:JSON.stringify({username:form.username.value})});
+      const data=await request('/api/admin/recovery-code',{method:'POST',body:JSON.stringify({username:form.elements.namedItem('username').value})});
       $('#recoveryCreated').hidden=false;$('#resetCodeOutput').value=data.code;
       notice('Código de recuperación de '+data.username+' creado. Vence en 30 minutos; entregalo solo tras confirmar su identidad.');
     }catch(err){notice(err.message,true)}finally{button.disabled=false;}
