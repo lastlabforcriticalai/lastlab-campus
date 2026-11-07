@@ -73,7 +73,11 @@ async function register(env,req) {
   if(!usernameOK(username))return fail('Usuario: 3–30 caracteres, letras minúsculas, números, punto, guion o guion bajo.');
   if(typeof password!=='string'||password.length<12||password.length>128)return fail('La contraseña debe tener entre 12 y 128 caracteres.');
   if(display.length>80)return fail('El nombre visible no puede superar los 80 caracteres.');
-  if(!await limit(env,req,'register',username,5,3600))return fail('Demasiados registros. Probá más tarde.',429);
+  const bootstrapMode=env.REGISTRATION_ENABLED!=='true';
+  // Rate limits for closed pilot activation are independent of public registration.
+  // Failed invitation attempts remain limited; legacy registration attempts cannot block bootstrap.
+  if(!await limit(env,req,bootstrapMode?'bootstrap-register':'register',username,5,3600))
+    return fail(bootstrapMode?'Demasiados intentos de activación. Probá más tarde.':'Demasiados registros. Probá más tarde.',429);
   // Registro público cerrado: la cuenta docente inicial requiere un código
   // guardado exclusivamente como secreto de Cloudflare.
   let role='student';
