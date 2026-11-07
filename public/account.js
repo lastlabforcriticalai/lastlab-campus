@@ -77,7 +77,7 @@
     slot.innerHTML=`<p>Sesión iniciada como <b>${esc(user.displayName||user.username)}</b>. Tu avance se guarda en Cloudflare D1 y puede recuperarse desde otros dispositivos.</p>
     <div class="controls"><button class="primary" id="logout">Cerrar sesión</button><button class="secondary" id="passwordChange">Cambiar contraseña</button></div>
     <div class="notice" id="accountNotice" hidden></div><section id="hybridAccount"></section>${user.role==='admin'?adminMarkup():''}
-    <p class="hint">Privacidad: conservamos el nombre de usuario, el avance y los intentos de evaluación. No se piden documentos ni datos financieros.</p>`;
+    <p class="hint">Privacidad: conservamos el usuario, el avance y los resultados. Si registrás un correo, se usa para verificar la cuenta y recuperar el acceso. No solicitamos datos financieros reales.</p>`;
     $('#logout').onclick=logout;
     $('#passwordChange').onclick=changePasswordForm;
     loadHybridAccount();
@@ -293,7 +293,7 @@
   request('/api/auth/features').then(d=>{
     recoveryFeatures.emailRecovery=!!d.emailRecovery;
     recoveryFeatures.backupRecovery=!!d.backupRecovery;
-    if(dialog.open)render();
+    if(dialog.open){const msg=$('#accountNotice')?.textContent;const error=$('#accountNotice')?.classList.contains('error');render();if(msg)notice(msg,error);}
   }).catch(()=>{});
   refreshUI();
 })();
