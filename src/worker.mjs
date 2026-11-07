@@ -84,7 +84,7 @@ async function register(env,req) {
     const master=env.BOOTSTRAP_INVITE_CODE;
     const bootstrap=typeof master==='string'&&master.length>=32&&constantTimeEqual(code,master);
     if(bootstrap){
-      const existing=await env.DB.prepare('SELECT COUNT(*) AS n FROM users').first();
+      const existing=await env.DB.prepare('SELECT COUNT(*) AS n FROM users').bind().first();
       if(Number(existing?.n||0)!==0)return fail('La activación inicial de administrador ya fue utilizada.',403);
       role='admin';
     }else if(env.INVITES_ENABLED==='true'&&await isValidInvite(env,code)){
