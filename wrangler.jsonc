@@ -19,6 +19,7 @@
     }
   ],
   "vars": {
-    "REGISTRATION_ENABLED": "false"
+    "REGISTRATION_ENABLED": "false",
+    "INVITES_ENABLED": "true"
   }
 }
