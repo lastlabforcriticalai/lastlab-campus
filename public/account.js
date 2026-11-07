@@ -2,6 +2,8 @@
   'use strict';
   const COURSE_KEY='fibia-v1';
   let user=null, bridge=null, timer=null, pending=null, saving=false, available=true, loginTab='login';
+  let recoveryMode='teacher',resetEmailToken=null;
+  const recoveryFeatures={emailRecovery:false,backupRecovery:false};
   const existing=document.querySelector('.topRight');
   const button=document.createElement('button'); button.id='accountButton';button.className='topButton';button.textContent='Ingresar / Registrarse';existing.appendChild(button);
   const indicator=document.createElement('span');indicator.className='account-status';button.before(indicator);
