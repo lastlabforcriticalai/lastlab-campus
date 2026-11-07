@@ -106,7 +106,7 @@ test('docente genera invitaciones privadas, alumno se registra y el código se c
  r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:teacherCookie,body:{count:2,label:'Piloto de noviembre'}});
  assert.equal(r.status,201);assert.equal(r.data.codes.length,2);
  const invite=r.data.codes[0];assert.match(invite,/^[0-9a-f]{64}$/);
- const dbRow=await env.DB.prepare('SELECT token_hash FROM course_invites LIMIT 1').first();
+ const dbRow=await env.DB.prepare('SELECT token_hash FROM course_invites LIMIT 1').bind().first();
  assert.notEqual(dbRow.token_hash,invite);
  r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student1',password:'PasswordSeguroDePrueba2026!',inviteCode:invite}});
  assert.equal(r.status,201);assert.equal(r.data.user.role,'student');
@@ -120,7 +120,7 @@ test('docente genera invitaciones privadas, alumno se registra y el código se c
  const unused=r.data.invites.find(row=>!row.redeemed_at);
  r=await call(env,'/api/admin/invites/revoke',{method:'POST',sessionCookie:teacherCookie,body:{tokenHash:unused.token_hash}});
  assert.equal(r.status,200);
- const secondCode=(await env.DB.prepare('SELECT token_hash FROM course_invites WHERE redeemed_at IS NOT NULL').first()).token_hash;
+ const secondCode=(await env.DB.prepare('SELECT token_hash FROM course_invites WHERE redeemed_at IS NOT NULL').bind().first()).token_hash;
  assert.equal(typeof secondCode,'string');
 });
 
