@@ -1,0 +1,28 @@
+#accountButton{min-width:94px;white-space:nowrap}
+.account-status{display:inline-block;font-size:11px;color:#d6e9d5;margin-right:5px}
+.account-status.offline{color:#f4daa4}
+.account-dialog{position:fixed;inset:0;margin:auto;max-width:min(92vw,510px);width:510px;max-height:86vh;overflow:auto;border:1px solid #b4d2bd;border-radius:16px;background:#fff;color:#243b2c;box-shadow:0 25px 80px #0005;padding:0}
+.account-dialog::backdrop{background:rgba(11,30,16,.67);backdrop-filter:blur(3px)}
+.account-dialog header{display:flex;justify-content:space-between;align-items:center;background:#1a3f1c;color:#f8f1df;padding:19px 23px}
+.account-dialog header h2{font:600 24px/1.2 'Source Serif 4',Georgia,serif;margin:0}
+.account-dialog header button{background:transparent;border:1px solid #7e9d85;color:#fff;border-radius:8px;padding:5px 10px;font-size:18px}
+.account-body{padding:22px 24px 25px}
+.account-body p{font-size:13px;line-height:1.65;margin:0 0 14px}
+.account-body .row{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+.account-body label{font-size:12px;font-weight:700}
+.account-body input{width:100%;padding:11px 12px;border-radius:7px;border:1px solid #a9c1ac;background:#f9fbf8;color:#1f3926}
+.account-body button.primary{border:none;background:#205a31;color:#fff;font-weight:700;border-radius:8px;padding:11px 14px;cursor:pointer}
+.account-body button.secondary{border:1px solid #9fbea4;background:#f2f6f0;color:#205a31;border-radius:8px;padding:9px 12px;cursor:pointer}
+.account-body .notice{font-size:12px;padding:10px 12px;background:#eef5e9;border-left:3px solid #407e52;border-radius:6px;margin-top:12px}
+.account-body .notice.error{background:#fff0ed;border-color:#ad4a4a;color:#852f2f}
+.account-body .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.account-body .hint{font-size:11px;color:#6c826f;margin-top:13px}
+.account-body .muted{color:#58735c}
+.account-body .table-wrap{overflow:auto;max-height:390px;margin-top:10px}
+.account-body table{border-collapse:collapse;width:100%;font-size:11px;min-width:530px}
+.account-body th,.account-body td{padding:7px;text-align:left;border-bottom:1px solid #dce6dd;white-space:nowrap}
+.account-body th{background:#edf5ed}
+.account-body .tabset{display:flex;gap:8px;margin-bottom:15px}
+.account-body .tabset button{flex:1;padding:9px;border:1px solid #a2c0a4;border-radius:7px;color:#295637;background:#f0f4ee}
+.account-body .tabset button.active{background:#1a3f1c;color:#f8f1df}
+@media(max-width:780px){.account-status{display:none}.topRight{gap:5px}.topRight .topButton{font-size:11px;padding:6px}.account-dialog{width:94vw}.account-body{padding:18px}}
