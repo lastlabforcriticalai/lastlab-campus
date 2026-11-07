@@ -92,18 +92,33 @@
   }
   async function onSubmit(e){
     e.preventDefault();const form=e.currentTarget,values=Object.fromEntries(new FormData(form));
-    if(loginTab==='register' && String(values.inviteCode||'').length<32){notice('El código tiene que tener al menos 32 caracteres. No se envió ninguna solicitud.',true);return;}
-    notice('Conectando con el campus…');
-    const submit=form.querySelector('[type=submit]');submit.disabled=true;
+    if(loginTab==='register'&&String(values.inviteCode||'').length<32){notice('El código de invitación tiene que tener al menos 32 caracteres.',true);return;}
+    const btn=form.querySelector('[type=submit]');btn.disabled=true;notice('Conectando con el campus…');
     try{
-      if(loginTab==='recover'){
-        const data=await request('/api/auth/reset-password',{method:'POST',body:JSON.stringify(values)});
-        loginTab='login';render();notice(data.message||'Contraseña actualizada. Iniciá sesión nuevamente.');
+      if(loginTab==='emailLink'){
+        const data=await request('/api/auth/email-reset/complete',{method:'POST',body:JSON.stringify({token:resetEmailToken,newPassword:values.newPassword})});
+        resetEmailToken=null;history.replaceState(null,'',location.pathname+location.search);
+        loginTab='login';render();notice(data.message);
+      }else if(loginTab==='recover'){
+        let path,bodyData;
+        if(recoveryMode==='email'&&recoveryFeatures.emailRecovery){
+          path='/api/auth/email-reset/request';bodyData={identifier:values.identifier};
+        }else if(recoveryMode==='backup'&&recoveryFeatures.backupRecovery){
+          path='/api/auth/backup-reset';bodyData=values;
+        }else{path='/api/auth/reset-password';bodyData=values;}
+        const data=await request(path,{method:'POST',body:JSON.stringify(bodyData)});
+        if(path!=='/api/auth/email-reset/request'){loginTab='login';render();}
+        notice(data.message||'Revisá las instrucciones de recuperación.');
       }else{
         const data=await request('/api/auth/'+(loginTab==='login'?'login':'register'),{method:'POST',body:JSON.stringify(values)});
-        user=data.user;await restoreProgress();refreshUI();render();notice('Sesión iniciada. Tu progreso está sincronizado.');
+        user=data.user;await restoreProgress();refreshUI();render();
+        const msg=data.emailVerificationSent===true?'Cuenta creada. Revisá tu correo para verificarlo.'
+          :data.emailVerificationSent===false?'Cuenta creada, pero no se pudo enviar el enlace. Iniciá sesión y reenviá la verificación desde Mi cuenta.'
+          :'Sesión iniciada. Tu progreso está sincronizado.';
+        notice(msg,data.emailVerificationSent===false);
       }
-    }catch(err){notice(err.message,true)}finally{submit.disabled=false;}
+    }catch(err){notice(err.message,true)}
+    finally{btn.disabled=false;}
   }
   async function restoreProgress(){
     if(!bridge)return;
