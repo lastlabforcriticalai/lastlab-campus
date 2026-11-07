@@ -28,7 +28,7 @@ export async function issueInvites(env, adminId, payload) {
   return {codes,label,expiresAt};
 }
 export async function listInvites(env){
-  const result=await env.DB.prepare('SELECT token_hash,label,created_at,expires_at,redeemed_at,revoked_at FROM course_invites ORDER BY created_at DESC LIMIT 120').all();
+  const result=await env.DB.prepare('SELECT token_hash,label,created_at,expires_at,redeemed_at,revoked_at FROM course_invites ORDER BY created_at DESC LIMIT 120').bind().all();
   return result.results||[];
 }
 export async function revokeInvite(env,hash){
