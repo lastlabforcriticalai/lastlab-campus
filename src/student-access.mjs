@@ -10,7 +10,7 @@ const changes = row => Number(row?.meta?.changes ?? row?.changes ?? 0);
 
 export async function issueInvites(env, adminId, payload) {
   const count=Number(payload?.count ?? 1);
-  if(!Number.isInteger(count) || count<1 || count>20) return {error:'Se pueden generar entre 1 y 20 códigos por operación.'};
+  if(!Number.isInteger(count) || count<1 || count>50) return {error:'Se pueden generar entre 1 y 50 códigos por operación.'};
   const label=typeof payload?.label==='string'?payload.label.trim():'';
   if(label.length>80) return {error:'La referencia debe tener 80 caracteres como máximo.'};
   const n=await env.DB.prepare('SELECT COUNT(*) AS n FROM course_invites WHERE redeemed_at IS NULL AND revoked_at IS NULL AND expires_at>?')
@@ -18,11 +18,20 @@ export async function issueInvites(env, adminId, payload) {
   if(Number(n?.n || 0)+count>250) return {error:'Límite de invitaciones activas alcanzado. Revocá o esperá el vencimiento de las existentes.'};
   const now=epoch(),expiresAt=now+7*86400;
   const codes=[],statements=[];
+  // D1 Workers Free permite 50 consultas por ejecución y 100 parámetros
+  // por consulta. Agrupamos 20 invitaciones por INSERT (20 x 5 = 100).
+  // Emitir 50 códigos consume solo 3 INSERT, no 50 consultas separadas.
+  const rows=[];
   for(let i=0;i<count;i++){
     const code=randomCode();
     codes.push(code);
-    statements.push(env.DB.prepare('INSERT INTO course_invites(token_hash,label,created_by,created_at,expires_at) VALUES (?,?,?,?,?)')
-      .bind(await sha256(code),label,adminId,now,expiresAt));
+    rows.push([await sha256(code),label,adminId,now,expiresAt]);
+  }
+  for(let i=0;i<rows.length;i+=20){
+    const part=rows.slice(i,i+20);
+    const placeholders=part.map(()=>'(?,?,?,?,?)').join(',');
+    const values=part.flat();
+    statements.push(env.DB.prepare('INSERT INTO course_invites(token_hash,label,created_by,created_at,expires_at) VALUES '+placeholders).bind(...values));
   }
   await env.DB.batch(statements);
   return {codes,label,expiresAt};
