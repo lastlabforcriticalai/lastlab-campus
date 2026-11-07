@@ -204,8 +204,19 @@ test('recuperación autónoma: registro, email verificado y restablecimiento sin
    let token=sent[0].text.match(/#verificar-correo=([0-9a-f]{64})/)[1];
    let db=await env.DB.prepare("SELECT token_hash FROM email_action_tokens WHERE purpose='verify'").bind().first();
    assert.notEqual(db.token_hash,token);
+   // Un correo registrado pero todavía no verificado no permite iniciar sesión.
+   let byEmail=await call(env,'/api/auth/login',{method:'POST',body:{username:'alumno@example.com',password:'Original_Contrasena_Segura_2026'}});
+   assert.equal(byEmail.status,401);
+   // El nombre de usuario sigue funcionando durante la verificación.
+   let byUsername=await call(env,'/api/auth/login',{method:'POST',body:{username:'alumnoemail',password:'Original_Contrasena_Segura_2026'}});
+   assert.equal(byUsername.status,200);
    r=await call(env,'/api/auth/verify-email',{method:'POST',body:{token}});
    assert.equal(r.status,200);
+   // Una vez verificado, se permiten email y nombre de usuario, pero nunca otra contraseña.
+   byEmail=await call(env,'/api/auth/login',{method:'POST',body:{username:'ALUMNO@EXAMPLE.COM',password:'Original_Contrasena_Segura_2026'}});
+   assert.equal(byEmail.status,200);assert.equal(byEmail.data.user.username,'alumnoemail');
+   byEmail=await call(env,'/api/auth/login',{method:'POST',body:{username:'alumno@example.com',password:'Clave_Incorrecta_2026'}});
+   assert.equal(byEmail.status,401);
    r=await call(env,'/api/auth/verify-email',{method:'POST',body:{token}});
    assert.equal(r.status,403);
    r=await call(env,'/api/account/email',{sessionCookie:oldCookie});
