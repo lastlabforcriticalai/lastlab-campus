@@ -277,5 +277,23 @@
   }
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&user&&pending)flush()});
   window.LASTAuth={connect,isLoggedIn:()=>Boolean(user),queueSave,submitQuiz,clearProgress,open};
+  // Fragmentos: el token no se transmite en la URL HTTP, solo en el cuerpo POST.
+  const fragment=location.hash||'';
+  if(/^#restablecer-correo=[0-9a-f]{64}$/.test(fragment)){
+    resetEmailToken=fragment.split('=')[1];loginTab='emailLink';setTimeout(open,0);
+  }else if(/^#verificar-correo=[0-9a-f]{64}$/.test(fragment)){
+    const token=fragment.split('=')[1];
+    history.replaceState(null,'',location.pathname+location.search);
+    setTimeout(async()=>{
+      open();notice('Verificando correo…');
+      try{const d=await request('/api/auth/verify-email',{method:'POST',body:JSON.stringify({token})});notice(d.message);}
+      catch(err){notice(err.message,true);}
+    },0);
+  }
+  request('/api/auth/features').then(d=>{
+    recoveryFeatures.emailRecovery=!!d.emailRecovery;
+    recoveryFeatures.backupRecovery=!!d.backupRecovery;
+    if(dialog.open)render();
+  }).catch(()=>{});
   refreshUI();
 })();
