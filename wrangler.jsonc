@@ -21,7 +21,8 @@
   "vars": {
     "REGISTRATION_ENABLED": "false",
     "INVITES_ENABLED": "true",
-    "EMAIL_RECOVERY_ENABLED": "false",
-    "BACKUP_RECOVERY_ENABLED": "false"
+    "EMAIL_RECOVERY_ENABLED": "true",
+    "BACKUP_RECOVERY_ENABLED": "true",
+    "EMAIL_FROM": "LAST Lab Campus <acceso@notificaciones.lastlab.lat>"
   }
 }
