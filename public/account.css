@@ -44,3 +44,16 @@
 .account-body .invites-table button{font-size:11px;padding:6px}
 .account-body .tabset button{font-size:12px}
 @media(max-width:580px){.account-dialog.admin-view{width:96vw;max-width:96vw}.account-body .admin-grid{grid-template-columns:1fr}.account-body .admin-section{padding:12px}.account-body .admin-section .controls{align-items:stretch}.account-body .tabset{gap:4px}.account-body .tabset button{padding:8px 4px;font-size:11px}}
+
+/* Autogestión de contraseña con correo y códigos personales. */
+.account-body .recovery-choices{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0 16px}
+.account-body .recovery-choices button{border:1px solid #b2c9b6;border-radius:7px;background:#f2f6f1;color:#214d2e;padding:8px 10px;font-size:12px;cursor:pointer}
+.account-body .recovery-choices button.active{background:#1a3f1c;color:#fff;border-color:#1a3f1c}
+.account-body #hybridAccount{margin:15px 0}
+.account-body #hybridAccount .recovery-panel{border:1px solid #d5e3d8;border-radius:11px;background:#f9fbf9;padding:16px}
+.account-body #hybridAccount h3{font-family:'Source Serif 4',Georgia,serif;color:#21482b;font-size:20px;margin:0 0 8px}
+.account-body #hybridAccount .hint{line-height:1.6;overflow-wrap:anywhere}
+.account-body #hybridAccount .secondary{margin-top:7px}
+.account-body #newBackupCodes{background:#eef5e9;border-radius:8px;padding:12px;margin-top:12px}
+.account-body #newBackupCodes textarea{display:block;width:100%;border:1px solid #9fbea4;border-radius:7px;background:white;font-size:12px;font-family:monospace;line-height:1.6;padding:8px;word-break:break-all;resize:vertical}
+@media(max-width:570px){.account-body .recovery-choices{gap:5px}.account-body .recovery-choices button{font-size:11px;padding:7px 8px}}

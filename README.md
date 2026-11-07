@@ -39,3 +39,21 @@ La integración con Cloudflare Workers Builds se conectó al repositorio el 7 de
 - No ejecutar `wrangler d1 migrations apply --remote` sin revisar que la migración `0001_init.sql` se aplicó ya manualmente: para esta etapa usar exclusivamente la migración aditiva `0002_student_access.sql` mediante la consola D1.
 
 La emisión de 50 códigos utiliza tres operaciones SQL de inserción (hasta 20 filas por instrucción), respetando el límite de parámetros y las consultas disponibles en Cloudflare Workers Free.
+
+## Etapa 3 - Recuperación híbrida (sin activar hasta completar configuración)
+
+Esta etapa agrega recuperación de contraseña por enlace enviado a un correo previamente verificado y ocho códigos personales de respaldo. La recuperación asistida por el docente sigue disponible.
+
+### Activación segura paso a paso
+
+1. En Cloudflare D1, ejecutar solamente migrations/0003_hybrid_recovery.sql en la base lastlab-campus-db. Verificar las tablas account_emails, email_action_tokens y account_backup_codes. Es una migración aditiva; no modifica users, progress ni quiz_attempts.
+2. Para habilitar códigos personales sin correo, cambiar BACKUP_RECOVERY_ENABLED a true en wrangler.jsonc. Hasta ejecutar el paso 1, dejarlo false.
+3. Abrir cuenta en https://resend.com, agregar y verificar un subdominio de envío propio, por ejemplo notificaciones.lastlab.lat. Cargar exclusivamente los registros DNS que indique Resend en el proveedor DNS autoritativo. No reemplazar registros existentes de la web ni del correo.
+4. Crear una clave API de Resend con permiso de envío y agregarla en Cloudflare Workers -> lastlab-campus -> Settings -> Variables and Secrets como Secret llamado RESEND_API_KEY. Nunca compartir ni almacenar la clave en GitHub.
+5. Definir EMAIL_FROM en Cloudflare como un remitente bajo el dominio verificado, por ejemplo LAST Lab Campus <acceso@notificaciones.lastlab.lat>. El ejemplo solo será válido si ese subdominio fue realmente verificado.
+6. Con el proveedor configurado, poner EMAIL_RECOVERY_ENABLED a true en wrangler.jsonc y desplegar. Probar con correo propio: asociar, recibir enlace, verificar, solicitar recuperación, cambiar contraseña y volver a entrar; revisar que se conserve el progreso.
+
+El reset enviado por correo vence en 30 minutos. La verificación vence en 24 horas. Cada token es aleatorio y de un uso; la base solo almacena su SHA-256. Los enlaces contienen el token en el fragmento URL para que no se transmita automáticamente en solicitudes HTTP. El reset invalida las sesiones antiguas.
+Los códigos personales son ocho, con 48 caracteres hexadecimales aleatorios cada uno; se muestran una sola vez. La regeneración exige la contraseña actual e invalida los anteriores. El restablecimiento con cada código también invalida sesiones anteriores.
+
+En el plan gratuito de Resend se admiten 3.000 envíos mensuales y 100 diarios (confirmar precios y cuotas al activarlo). El sistema nunca envía mensajes ni admite restablecimiento por email mientras EMAIL_RECOVERY_ENABLED sea false.

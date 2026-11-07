@@ -2,6 +2,8 @@
   'use strict';
   const COURSE_KEY='fibia-v1';
   let user=null, bridge=null, timer=null, pending=null, saving=false, available=true, loginTab='login';
+  let recoveryMode='teacher',resetEmailToken=null;
+  const recoveryFeatures={emailRecovery:false,backupRecovery:false};
   const existing=document.querySelector('.topRight');
   const button=document.createElement('button'); button.id='accountButton';button.className='topButton';button.textContent='Ingresar / Registrarse';existing.appendChild(button);
   const indicator=document.createElement('span');indicator.className='account-status';button.before(indicator);
@@ -32,15 +34,32 @@
   button.addEventListener('click',open);dialog.querySelector('#accountClose').addEventListener('click',close);
   dialog.addEventListener('click',e=>{if(e.target===dialog)close()});
   function formMarkup(){
-    const login=loginTab==='login',register=loginTab==='register',recover=loginTab==='recover';
-    return '<div class="tabset"><button type="button" data-tab="login" class="'+(login?'active':'')+'">Ingresar</button><button type="button" data-tab="register" class="'+(register?'active':'')+'">Crear usuario</button><button type="button" data-tab="recover" class="'+(recover?'active':'')+'">Recuperar</button></div>'
-    +'<p>'+(recover?'Si olvidaste la contraseña, solicitá al docente un código de recuperación de un solo uso. No se envía correo automáticamente.':register?'Para guardar el avance necesitás una invitación individual del docente.':'Ingresá con tu usuario y contraseña para recuperar tu avance.')+'</p>'
-    +'<form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required placeholder="ejemplo: estudiante_01"></div>'
-    +(register?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div><div class="row"><label for="inviteInput">Código individual de invitación</label><input id="inviteInput" name="inviteCode" type="password" autocomplete="off" required><small id="inviteLength">Longitud del código: 0 caracteres</small><small>Los códigos se entregan por el docente y solo pueden utilizarse una vez.</small></div>':'')
-    +(recover?'<div class="row"><label for="recoveryInput">Código de recuperación del docente</label><input id="recoveryInput" name="recoveryCode" type="password" autocomplete="off" required minlength="64" maxlength="64"></div>':'')
-    +'<div class="row"><label for="passInput">'+(recover?'Contraseña nueva': 'Contraseña')+' (mínimo 12 caracteres)</label><input type="password" id="passInput" name="'+(recover?'newPassword':'password')+'" autocomplete="'+(login?'current-password':'new-password')+'" required minlength="'+(login?'1':'12')+'" maxlength="128"></div>'
-    +'<button class="primary" type="submit">'+(recover?'Restablecer contraseña':register?'Crear mi cuenta':'Iniciar sesión')+'</button></form>'
-    +'<div class="notice" id="accountNotice" hidden></div><p class="hint">En esta versión no se solicitan correos electrónicos. El docente administra las invitaciones y las recuperaciones de alumnos.</p>';
+    const login=loginTab==='login',register=loginTab==='register',recover=loginTab==='recover',link=loginTab==='emailLink';
+    const tabs='<div class="tabset"><button type="button" data-tab="login" class="'+(login?'active':'')+'">Ingresar</button><button type="button" data-tab="register" class="'+(register?'active':'')+'">Crear usuario</button><button type="button" data-tab="recover" class="'+(recover||link?'active':'')+'">Recuperar</button></div>';
+    const noticeHtml='<div class="notice" id="accountNotice" hidden></div>';
+    if(link)return tabs+'<p>Elegí una contraseña nueva para completar la recuperación por correo.</p><form id="accountForm"><div class="row"><label for="newPass">Nueva contraseña (12 caracteres como mínimo)</label><input id="newPass" name="newPassword" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></div><button class="primary" type="submit">Guardar nueva contraseña</button></form>'+noticeHtml;
+    if(recover){
+      const chosen=recoveryMode==='email'&&!recoveryFeatures.emailRecovery?'teacher':recoveryMode==='backup'&&!recoveryFeatures.backupRecovery?'teacher':recoveryMode;
+      const choices='<div class="recovery-choices">'
+        +(recoveryFeatures.emailRecovery?'<button type="button" data-recovery="email" class="'+(chosen==='email'?'active':'')+'">Por correo</button>':'')
+        +(recoveryFeatures.backupRecovery?'<button type="button" data-recovery="backup" class="'+(chosen==='backup'?'active':'')+'">Código personal</button>':'')
+        +'<button type="button" data-recovery="teacher" class="'+(chosen==='teacher'?'active':'')+'">Ayuda docente</button></div>';
+      const fields=chosen==='email'
+        ?'<div class="row"><label for="identityInput">Usuario o correo verificado</label><input id="identityInput" name="identifier" required autocomplete="username"></div>'
+        :'<div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" required maxlength="30" autocomplete="username"></div>'
+          +'<div class="row"><label for="recoveryInput">'+(chosen==='backup'?'Uno de tus códigos personales':'Código entregado por el docente')+'</label><input id="recoveryInput" name="'+(chosen==='backup'?'code':'recoveryCode')+'" type="password" required autocomplete="off" maxlength="64"></div>'
+          +'<div class="row"><label for="passInput">Nueva contraseña (mínimo 12 caracteres)</label><input type="password" id="passInput" name="newPassword" autocomplete="new-password" required minlength="12" maxlength="128"></div>';
+      return tabs+'<p>'+(chosen==='email'?'Te enviaremos un enlace temporal, siempre que el correo de la cuenta esté verificado.':chosen==='backup'?'Usá un código personal que hayas guardado previamente.':'Solicitá al docente un código temporal de recuperación.')+'</p>'+choices
+        +'<form id="accountForm">'+fields+'<button class="primary" type="submit">'+(chosen==='email'?'Solicitar enlace de recuperación':'Restablecer contraseña')+'</button></form>'+noticeHtml;
+    }
+    return tabs+'<p>'+(register?'Para conservar tu avance necesitás una invitación individual del docente.':'Ingresá con tu usuario y contraseña.')+'</p>'
+      +'<form id="accountForm"><div class="row"><label for="userInput">Nombre de usuario</label><input id="userInput" name="username" maxlength="30" minlength="3" pattern="[a-zA-Z0-9_.-]{3,30}" autocomplete="username" required></div>'
+      +(register?'<div class="row"><label for="nameInput">Nombre visible (opcional)</label><input id="nameInput" name="displayName" maxlength="80" autocomplete="nickname"></div>'
+        +(recoveryFeatures.emailRecovery?'<div class="row"><label for="registerEmail">Correo para recuperar tu cuenta (se verificará)</label><input id="registerEmail" name="email" type="email" autocomplete="email" maxlength="254" required></div>':'')
+        +'<div class="row"><label for="inviteInput">Código individual de invitación</label><input id="inviteInput" name="inviteCode" type="password" autocomplete="off" required><small id="inviteLength">Longitud del código: 0 caracteres</small></div>':'')
+      +'<div class="row"><label for="passInput">Contraseña (mínimo 12 caracteres)</label><input type="password" id="passInput" name="password" autocomplete="'+(login?'current-password':'new-password')+'" required minlength="'+(login?'1':'12')+'" maxlength="128"></div>'
+      +'<button class="primary" type="submit">'+(register?'Crear mi cuenta':'Iniciar sesión')+'</button></form>'+noticeHtml
+      +'<p class="hint">'+(recoveryFeatures.emailRecovery?'El correo se usa para verificar la identidad y recuperar el acceso.':'El envío autónomo por correo se habilitará al configurar Resend.')+'</p>';
   }
   function adminMarkup(){return '<div class="admin-tools"><section class="admin-section">'
     +'<h3>Seguimiento de estudiantes</h3><div class="controls"><button type="button" class="secondary" id="adminLoad">Consultar progreso de estudiantes</button><button type="button" class="secondary" id="adminCSV" disabled>Exportar CSV</button></div><div id="adminResult" class="table-wrap"></div>'
@@ -54,13 +73,14 @@
     +'</section></div>';}
   function render(){
     dialog.classList.toggle('admin-view',Boolean(user&&user.role==='admin'));
-    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite)invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});return;}
+    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));slot.querySelectorAll('[data-recovery]').forEach(el=>el.addEventListener('click',()=>{recoveryMode=el.dataset.recovery;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite)invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});return;}
     slot.innerHTML=`<p>Sesión iniciada como <b>${esc(user.displayName||user.username)}</b>. Tu avance se guarda en Cloudflare D1 y puede recuperarse desde otros dispositivos.</p>
     <div class="controls"><button class="primary" id="logout">Cerrar sesión</button><button class="secondary" id="passwordChange">Cambiar contraseña</button></div>
-    <div class="notice" id="accountNotice" hidden></div>${user.role==='admin'?adminMarkup():''}
-    <p class="hint">Privacidad: conservamos el nombre de usuario, el avance y los intentos de evaluación. No se piden documentos ni datos financieros.</p>`;
+    <div class="notice" id="accountNotice" hidden></div><section id="hybridAccount"></section>${user.role==='admin'?adminMarkup():''}
+    <p class="hint">Privacidad: conservamos el usuario, el avance y los resultados. Si registrás un correo, se usa para verificar la cuenta y recuperar el acceso. No solicitamos datos financieros reales.</p>`;
     $('#logout').onclick=logout;
     $('#passwordChange').onclick=changePasswordForm;
+    loadHybridAccount();
     if(user.role==='admin'){
       $('#adminLoad').onclick=loadAdmin;
       $('#invitesForm').onsubmit=issueInvitesFromPanel;
@@ -72,18 +92,33 @@
   }
   async function onSubmit(e){
     e.preventDefault();const form=e.currentTarget,values=Object.fromEntries(new FormData(form));
-    if(loginTab==='register' && String(values.inviteCode||'').length<32){notice('El código tiene que tener al menos 32 caracteres. No se envió ninguna solicitud.',true);return;}
-    notice('Conectando con el campus…');
-    const submit=form.querySelector('[type=submit]');submit.disabled=true;
+    if(loginTab==='register'&&String(values.inviteCode||'').length<32){notice('El código de invitación tiene que tener al menos 32 caracteres.',true);return;}
+    const btn=form.querySelector('[type=submit]');btn.disabled=true;notice('Conectando con el campus…');
     try{
-      if(loginTab==='recover'){
-        const data=await request('/api/auth/reset-password',{method:'POST',body:JSON.stringify(values)});
-        loginTab='login';render();notice(data.message||'Contraseña actualizada. Iniciá sesión nuevamente.');
+      if(loginTab==='emailLink'){
+        const data=await request('/api/auth/email-reset/complete',{method:'POST',body:JSON.stringify({token:resetEmailToken,newPassword:values.newPassword})});
+        resetEmailToken=null;history.replaceState(null,'',location.pathname+location.search);
+        loginTab='login';render();notice(data.message);
+      }else if(loginTab==='recover'){
+        let path,bodyData;
+        if(recoveryMode==='email'&&recoveryFeatures.emailRecovery){
+          path='/api/auth/email-reset/request';bodyData={identifier:values.identifier};
+        }else if(recoveryMode==='backup'&&recoveryFeatures.backupRecovery){
+          path='/api/auth/backup-reset';bodyData=values;
+        }else{path='/api/auth/reset-password';bodyData=values;}
+        const data=await request(path,{method:'POST',body:JSON.stringify(bodyData)});
+        if(path!=='/api/auth/email-reset/request'){loginTab='login';render();}
+        notice(data.message||'Revisá las instrucciones de recuperación.');
       }else{
         const data=await request('/api/auth/'+(loginTab==='login'?'login':'register'),{method:'POST',body:JSON.stringify(values)});
-        user=data.user;await restoreProgress();refreshUI();render();notice('Sesión iniciada. Tu progreso está sincronizado.');
+        user=data.user;await restoreProgress();refreshUI();render();
+        const msg=data.emailVerificationSent===true?'Cuenta creada. Revisá tu correo para verificarlo.'
+          :data.emailVerificationSent===false?'Cuenta creada, pero no se pudo enviar el enlace. Iniciá sesión y reenviá la verificación desde Mi cuenta.'
+          :'Sesión iniciada. Tu progreso está sincronizado.';
+        notice(msg,data.emailVerificationSent===false);
       }
-    }catch(err){notice(err.message,true)}finally{submit.disabled=false;}
+    }catch(err){notice(err.message,true)}
+    finally{btn.disabled=false;}
   }
   async function restoreProgress(){
     if(!bridge)return;
@@ -126,6 +161,53 @@
     slot.innerHTML=`<p>Para cambiar tu contraseña, confirmá primero la actual.</p><form id="passwordForm"><div class="row"><label for="oldPass">Contraseña actual</label><input id="oldPass" name="oldPassword" type="password" autocomplete="current-password" required></div><div class="row"><label for="newPass">Contraseña nueva (12 caracteres como mínimo)</label><input id="newPass" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></div><button class="primary">Cambiar contraseña</button><button type="button" class="secondary" id="back">Volver</button></form><div class="notice" id="accountNotice" hidden></div>`;
     $('#back').onclick=render;
     $('#passwordForm').onsubmit=async e=>{e.preventDefault();let b=Object.fromEntries(new FormData(e.currentTarget));try{await request('/api/auth/change-password',{method:'POST',body:JSON.stringify(b)});user=null;bridge?.applyRemote({});refreshUI();render();notice('Contraseña actualizada. Iniciá sesión nuevamente.')}catch(err){notice(err.message,true)}};
+  }
+  async function loadHybridAccount(){
+    const host=$('#hybridAccount');if(!host)return;
+    if(!recoveryFeatures.emailRecovery&&!recoveryFeatures.backupRecovery){host.hidden=true;return;}
+    host.hidden=false;
+    host.innerHTML='<div class="admin-section recovery-panel"><h3>Recuperación autónoma</h3>'
+      +(recoveryFeatures.emailRecovery?'<div id="emailStatus" class="hint">Consultando correo…</div>'
+        +'<form id="emailForm"><div class="row"><label for="profileEmail">Correo electrónico</label><input id="profileEmail" type="email" name="email" maxlength="254" autocomplete="email" required></div>'
+        +'<div class="row"><label for="profilePass">Contraseña actual (para asociar o cambiar el correo)</label><input id="profilePass" type="password" name="password" autocomplete="current-password" required></div>'
+        +'<button type="submit" class="secondary">Guardar y verificar correo</button></form>'
+        +'<button type="button" id="resendEmail" class="secondary">Reenviar verificación</button>':'')
+      +(recoveryFeatures.backupRecovery?'<div id="backupStatus" class="hint">Consultando códigos…</div>'
+        +'<p class="hint">Los códigos personales sirven sin correo, una sola vez cada uno. Guardalos fuera del campus.</p>'
+        +'<form id="backupForm"><div class="row"><label for="backupPass">Contraseña actual</label><input id="backupPass" type="password" name="password" autocomplete="current-password" required></div>'
+        +'<button type="submit" class="secondary">Crear o reemplazar mis ocho códigos</button></form>'
+        +'<div id="newBackupCodes" hidden><label for="backupOutput">Códigos nuevos (guardalos ahora)</label><textarea id="backupOutput" readonly rows="6"></textarea><button type="button" class="secondary" id="copyBackup">Copiar códigos</button></div>':'')
+      +'</div>';
+    if(recoveryFeatures.emailRecovery){
+      try{const p=await request('/api/account/email');if(!$('#emailStatus'))return;
+        $('#emailStatus').textContent=p.email?(p.verified?'Correo verificado: ':'Correo pendiente de verificación: ')+p.email:'Todavía no registraste un correo.';
+        if(p.email)$('#profileEmail').value=p.email;
+      }catch(err){if($('#emailStatus'))$('#emailStatus').textContent=err.message;}
+      const form=$('#emailForm');if(form)form.onsubmit=async e=>{
+        e.preventDefault();const btn=form.querySelector('[type=submit]');btn.disabled=true;
+        try{const d=await request('/api/account/email',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});
+          await loadHybridAccount();notice(d.message);
+        }catch(err){notice(err.message,true)}finally{btn.disabled=false;}
+      };
+      const resend=$('#resendEmail');if(resend)resend.onclick=async()=>{
+        resend.disabled=true;
+        try{const d=await request('/api/account/email/resend',{method:'POST',body:'{}'});notice(d.message);}
+        catch(err){notice(err.message,true)}finally{resend.disabled=false;}
+      };
+    }
+    if(recoveryFeatures.backupRecovery){
+      try{const status=await request('/api/account/backup-codes');if($('#backupStatus'))$('#backupStatus').textContent='Códigos sin usar: '+status.remaining;}
+      catch(err){if($('#backupStatus'))$('#backupStatus').textContent=err.message;}
+      const form=$('#backupForm');if(form)form.onsubmit=async e=>{
+        e.preventDefault();const btn=form.querySelector('[type=submit]');btn.disabled=true;
+        try{const d=await request('/api/account/backup-codes',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});
+          const box=$('#newBackupCodes');box.hidden=false;$('#backupOutput').value=d.codes.join('\n');form.reset();
+          $('#backupStatus').textContent='Códigos sin usar: '+d.remaining;
+          notice('Guardá los códigos ahora. Los anteriores dejaron de funcionar.');
+        }catch(err){notice(err.message,true)}finally{btn.disabled=false;}
+      };
+      const copy=$('#copyBackup');if(copy)copy.onclick=()=>copySecret($('#backupOutput').value);
+    }
   }
   let exportRows=[];
   async function copySecret(value){
@@ -195,5 +277,23 @@
   }
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&user&&pending)flush()});
   window.LASTAuth={connect,isLoggedIn:()=>Boolean(user),queueSave,submitQuiz,clearProgress,open};
+  // Fragmentos: el token no se transmite en la URL HTTP, solo en el cuerpo POST.
+  const fragment=location.hash||'';
+  if(/^#restablecer-correo=[0-9a-f]{64}$/.test(fragment)){
+    resetEmailToken=fragment.split('=')[1];loginTab='emailLink';setTimeout(open,0);
+  }else if(/^#verificar-correo=[0-9a-f]{64}$/.test(fragment)){
+    const token=fragment.split('=')[1];
+    history.replaceState(null,'',location.pathname+location.search);
+    setTimeout(async()=>{
+      open();notice('Verificando correo…');
+      try{const d=await request('/api/auth/verify-email',{method:'POST',body:JSON.stringify({token})});notice(d.message);}
+      catch(err){notice(err.message,true);}
+    },0);
+  }
+  request('/api/auth/features').then(d=>{
+    recoveryFeatures.emailRecovery=!!d.emailRecovery;
+    recoveryFeatures.backupRecovery=!!d.backupRecovery;
+    if(dialog.open){const msg=$('#accountNotice')?.textContent;const error=$('#accountNotice')?.classList.contains('error');render();if(msg)notice(msg,error);}
+  }).catch(()=>{});
   refreshUI();
 })();
