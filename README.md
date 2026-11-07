@@ -28,3 +28,12 @@ Agregar en una etapa posterior un enlace discreto desde «Cursos / Courses» de 
 
 ## Despliegue inicial
 La integración con Cloudflare Workers Builds se conectó al repositorio el 7 de noviembre de 2026. Este cambio documental inicia una comprobación de despliegue automático; el registro sigue desactivado durante las pruebas.
+
+## Etapa 2 — Invitaciones individuales y recuperación docente
+- **Seguridad:** funciona solo si `INVITES_ENABLED=true`, tras crear en D1 las tablas de `migrations/0002_student_access.sql`. Hasta entonces, el campus conserva todo su funcionamiento previo y no admite inscripciones nuevas.
+- El administrador genera de 1 a 20 invitaciones por operación, válidas por 7 días, cada una de uso único. Se almacena solo SHA-256 del código; el texto del código aparece una sola vez.
+- Los estudiantes usan el código para registrarse, sin necesidad de abrir `REGISTRATION_ENABLED`.
+- El administrador puede revocar invitaciones, ver su estado y generar un código de recuperación para un estudiante, válido por 30 minutos. **Debe verificar su identidad por fuera del sistema** antes de entregárselo.
+- El estudiante recupera su contraseña desde `Ingresar / Registrarse → Recuperar` y se invalidan sus sesiones anteriores.
+- Sin envío de correos ni recuperación automática. No se debe anunciar como plataforma pública todavía.
+- No ejecutar `wrangler d1 migrations apply --remote` sin revisar que la migración `0001_init.sql` se aplicó ya manualmente: para esta etapa usar exclusivamente la migración aditiva `0002_student_access.sql` mediante la consola D1.
