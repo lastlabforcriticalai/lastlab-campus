@@ -25,3 +25,6 @@ La aplicación utiliza cookies HttpOnly y sesiones en D1; la evaluación es una 
 
 ## Integración con la web institucional
 Agregar en una etapa posterior un enlace discreto desde «Cursos / Courses» de `lastlab.lat` a este campus, sujeto a revisión institucional. No se altera `laslabcritical/lastlab`.
+
+## Despliegue inicial
+La integración con Cloudflare Workers Builds se conectó al repositorio el 7 de noviembre de 2026. Este cambio documental inicia una comprobación de despliegue automático; el registro sigue desactivado durante las pruebas.
