@@ -74,13 +74,32 @@ async function register(env,req) {
   if(typeof password!=='string'||password.length<12||password.length>128)return fail('La contraseña debe tener entre 12 y 128 caracteres.');
   if(display.length>80)return fail('El nombre visible no puede superar los 80 caracteres.');
   if(!await limit(env,req,'register',username,5,3600))return fail('Demasiados registros. Probá más tarde.',429);
-  // Intentionally no email, to avoid false verified-email claims and external email costs.
+  // Registro público cerrado: la cuenta docente inicial requiere un código
+  // guardado exclusivamente como secreto de Cloudflare.
+  let role='student';
+  if(env.REGISTRATION_ENABLED!=='true'){
+    const provided=typeof b.inviteCode==='string'?b.inviteCode:'';
+    const expected=env.BOOTSTRAP_INVITE_CODE;
+    if(typeof expected!=='string'||expected.length<32||!constantTimeEqual(provided,expected))
+      return fail('Inscripciones cerradas. Se necesita un código de activación para la cuenta inicial.',403);
+    const existing=await env.DB.prepare('SELECT COUNT(*) AS n FROM users').bind().first();
+    if(Number(existing?.n||0)!==0)return fail('La cuenta inicial ya fue creada. El código no puede reutilizarse.',403);
+    role='admin';
+  }
+  // No pedimos email sin tener un mecanismo de verificación y recuperación.
   const salt=randomHex(16), passHash=await derivePassword(password,salt), id=crypto.randomUUID();
   try {
-    await env.DB.prepare(`INSERT INTO users(id,username,display_name,password_hash,password_salt,password_iterations,role,created_at)
-      VALUES(?,?,?,?,?,?,'student',?)`).bind(id,username,display||username,passHash,salt,ITERATIONS,now()).run();
+    const initial=role==='admin';
+    const sql=initial
+      ? `INSERT INTO users(id,username,display_name,password_hash,password_salt,password_iterations,role,created_at)
+         SELECT ?,?,?,?,?,?,'admin',? WHERE NOT EXISTS (SELECT 1 FROM users)`
+      : `INSERT INTO users(id,username,display_name,password_hash,password_salt,password_iterations,role,created_at)
+         VALUES(?,?,?,?,?,?,'student',?)`;
+    const inserted=await env.DB.prepare(sql).bind(id,username,display||username,passHash,salt,ITERATIONS,now()).run();
+    if(initial && Number(inserted?.meta?.changes??inserted?.changes??0)!==1)
+      return fail('La cuenta inicial ya fue creada. El código no puede reutilizarse.',403);
   }catch(e){if(String(e).includes('UNIQUE'))return fail('Ese usuario ya existe.',409);throw e;}
-  return reply({ok:true,user:{id,username,displayName:display||username,role:'student'}},201,{'Set-Cookie':await createSession(env,id)});
+  return reply({ok:true,user:{id,username,displayName:display||username,role}},201,{'Set-Cookie':await createSession(env,id)});
 }
 async function login(env,req) {
   const b=await body(req),username=String(b.username||'').trim().toLowerCase();
@@ -179,10 +198,7 @@ async function api(req,env){
   if(path==='/api/health'&&method==='GET')return reply({ok:true,course:COURSE_ID});
   if(!env.DB || !env.RATE_LIMIT_SALT)return fail('Aplicación no configurada: faltan D1 o secretos.',503);
   if(!['GET','HEAD'].includes(method)&&!originOK(req))return fail('Origen no autorizado.',403);
-  if(path==='/api/auth/register'&&method==='POST'){
-    if(env.REGISTRATION_ENABLED!=='true')return fail('Inscripciones temporalmente deshabilitadas durante las pruebas.',403);
-    return register(env,req);
-  }
+  if(path==='/api/auth/register'&&method==='POST')return register(env,req);
   if(path==='/api/auth/login'&&method==='POST')return login(env,req);
   const u=await session(env,req);
   if(path==='/api/auth/me'&&method==='GET')return reply({ok:true,user:u?{id:u.id,username:u.username,displayName:u.display_name,role:u.role}:null});
