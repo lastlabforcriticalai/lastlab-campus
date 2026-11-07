@@ -157,3 +157,28 @@ test('módulo inactivo conserva el registro cerrado y rechaza administración nu
  r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student4',password:'PasswordOriginalSeguro2026!',inviteCode:'a'.repeat(64)}});
  assert.equal(r.status,403);
 });
+
+
+test('lote de 50 invitaciones D1: tres consultas de escritura, máximo cien parámetros por SQL',async()=>{
+ const env=makeEnv();env.REGISTRATION_ENABLED='false';env.INVITES_ENABLED='true';
+ env.BOOTSTRAP_INVITE_CODE='CodigoDePruebaLocalNoUsarEnLaNube-1234567890';
+ let r=await call(env,'/api/auth/register',{method:'POST',body:{username:'profesor50',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
+ assert.equal(r.status,201);const admin=r.cookie;
+ let inserts=0;
+ const prepare=env.DB.prepare;
+ env.DB.prepare=sql=>{
+   if(sql.startsWith('INSERT INTO course_invites(')){
+     inserts++;
+     assert.ok((sql.match(/\?/g)||[]).length<=100,'No superar 100 variables enlazadas por consulta D1');
+   }
+   return prepare(sql);
+ };
+ r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:admin,body:{count:50,label:'Cohorte de prueba'}});
+ assert.equal(r.status,201);assert.equal(r.data.codes.length,50);
+ assert.equal(new Set(r.data.codes).size,50);
+ assert.equal(inserts,3);
+ const row=await env.DB.prepare('SELECT COUNT(*) AS n FROM course_invites').bind().first();
+ assert.equal(row.n,50);
+ r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:admin,body:{count:51,label:'No admitido'}});
+ assert.equal(r.status,400);
+});
