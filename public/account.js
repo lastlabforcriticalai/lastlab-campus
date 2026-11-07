@@ -73,13 +73,14 @@
     +'</section></div>';}
   function render(){
     dialog.classList.toggle('admin-view',Boolean(user&&user.role==='admin'));
-    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite)invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});return;}
+    if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));slot.querySelectorAll('[data-recovery]').forEach(el=>el.addEventListener('click',()=>{recoveryMode=el.dataset.recovery;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite)invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});return;}
     slot.innerHTML=`<p>Sesión iniciada como <b>${esc(user.displayName||user.username)}</b>. Tu avance se guarda en Cloudflare D1 y puede recuperarse desde otros dispositivos.</p>
     <div class="controls"><button class="primary" id="logout">Cerrar sesión</button><button class="secondary" id="passwordChange">Cambiar contraseña</button></div>
-    <div class="notice" id="accountNotice" hidden></div>${user.role==='admin'?adminMarkup():''}
+    <div class="notice" id="accountNotice" hidden></div><section id="hybridAccount"></section>${user.role==='admin'?adminMarkup():''}
     <p class="hint">Privacidad: conservamos el nombre de usuario, el avance y los intentos de evaluación. No se piden documentos ni datos financieros.</p>`;
     $('#logout').onclick=logout;
     $('#passwordChange').onclick=changePasswordForm;
+    loadHybridAccount();
     if(user.role==='admin'){
       $('#adminLoad').onclick=loadAdmin;
       $('#invitesForm').onsubmit=issueInvitesFromPanel;
