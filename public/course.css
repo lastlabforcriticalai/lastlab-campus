@@ -341,3 +341,95 @@ html,body{max-width:100%;overflow-x:clip}
  .metric-card__front{display:flex!important}
  .metric-card__face{pointer-events:auto}
 }
+
+
+/* Segunda jornada · aula aplicada: evidencia, agenda y experimento de errores. */
+.day-two-studio,.fraud-lab,.day-two-final{
+ border-radius:20px;
+ border:1px solid #cdded2;
+ padding:clamp(21px,3vw,32px);
+ background:linear-gradient(145deg,#fcfefb 0%,#f5f9f5 100%);
+ box-shadow:0 16px 42px rgba(22,65,38,.065);
+}
+.day-two-studio__head{display:flex;justify-content:space-between;align-items:start;gap:18px}
+.day-two-studio h2,.fraud-lab h2,.day-two-final h2{
+ font:600 clamp(23px,2.75vw,31px)/1.18 'Source Serif 4',Georgia,serif;
+ letter-spacing:-.03em;color:#193f2b;margin:7px 0 13px;
+}
+.day-two-studio__head p{font-size:14px;color:#526b5c;max-width:540px}
+.day-two-studio__date{
+ flex:none;display:flex;flex-direction:column;gap:3px;
+ border-radius:13px;padding:13px 16px;background:#1c4c32;color:white;
+ text-align:center;white-space:nowrap;
+}
+.day-two-studio__date strong{font-size:16px;letter-spacing:.09em}
+.day-two-studio__date small{font-size:10px;color:#d5e8db}
+.day-two-agenda{margin:22px 0 16px;border:1px solid #d4e4d8;background:#fff;border-radius:13px;overflow:hidden}
+.day-two-agenda__row{display:grid;grid-template-columns:44px 65px minmax(0,1fr);gap:13px;align-items:center;padding:13px 17px;border-bottom:1px solid #e5eee7}
+.day-two-agenda__row:nth-child(2n){background:#f8fbf8}
+.day-two-agenda__row:last-child{border-bottom:0}
+.day-two-agenda__row>strong{font-size:12px;color:#35774c}
+.day-two-agenda__num{font-size:11px;color:#7e9f89;font-weight:800}
+.day-two-agenda__row b{font-size:13px;color:#20442d;display:block}
+.day-two-agenda__row small{font-size:11px;color:#637d69;display:block;line-height:1.55}
+.day-two-studio .day-two-studio__disclaimer{color:#64796c;font-size:12px}
+.day-two-evidence{
+ margin-top:22px;background:#fff;border:1px solid #d5e5d9;border-radius:15px;padding:19px;
+}
+.day-two-evidence__head{display:flex;flex-wrap:wrap;gap:6px 15px;align-items:center;justify-content:space-between;margin-bottom:17px}
+.day-two-evidence__head span{font-size:10px;font-weight:800;color:#548060;letter-spacing:.08em}
+.day-two-evidence__head strong{font-size:13px;color:#27593b}
+.day-two-evidence__row{margin-bottom:15px}
+.day-two-evidence__row>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;font-size:12px;color:#435a4a}
+.day-two-evidence__row>div:first-child b{font-size:17px;color:#195338;font-variant-numeric:tabular-nums}
+.day-two-evidence__track{height:11px;background:#e9f0eb;border-radius:999px;overflow:hidden}
+.day-two-evidence__track span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2c8054,#5cac70)}
+.day-two-evidence__row:nth-of-type(3) .day-two-evidence__track span{background:linear-gradient(90deg,#be9960,#e4bd78)}
+.day-two-evidence p{font-size:12px;line-height:1.7;color:#597161}
+.day-two-evidence a,.day-two-research a{font-size:12px;font-weight:700}
+.day-two-research{display:grid;grid-template-columns:72px minmax(0,1fr);gap:4px 17px;align-items:center;background:#e8f3ea;border:1px solid #cfe3d3;border-radius:14px;margin-top:15px;padding:16px 20px}
+.day-two-research__number{font-size:45px;font-weight:750;line-height:1;color:#296844;grid-row:span 2}
+.day-two-research p{font-size:12px;color:#3a5945;line-height:1.6;margin:0}
+.day-two-research a{grid-column:2}
+.fraud-lab__control{border:1px solid #d4e3d8;padding:18px 18px 14px;background:#fff;border-radius:14px;margin:22px 0}
+.fraud-lab__control label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:700;color:#305844}
+.fraud-lab__control label strong{font-size:19px;font-weight:800;color:#174b31;font-variant-numeric:tabular-nums}
+.fraud-lab__control input[type=range]{width:100%;cursor:pointer;accent-color:#20744b;margin:18px 0 8px}
+.fraud-lab__scale{display:flex;justify-content:space-between;gap:15px;font-size:10px;color:#6a8471}
+.fraud-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:20px 0}
+.fraud-cell{min-width:0;padding:16px 12px 14px;border:1px solid #d1e2d5;border-radius:12px;background:#fff}
+.fraud-cell small{font-size:9px;font-weight:800;letter-spacing:.08em;color:#4e735b;display:block;min-height:35px;line-height:1.4}
+.fraud-cell strong{font-size:clamp(29px,4vw,43px);font-variant-numeric:tabular-nums;display:block;color:#1d5539;line-height:1.1;margin:4px 0}
+.fraud-cell>span{font-size:11px;color:#5c7666}
+.fraud-cell--fp{background:#fdf9f1;border-color:#eedcbd}.fraud-cell--fp strong{color:#8b611f}
+.fraud-cell--fn{background:#fcf6f6;border-color:#e9cfd0}.fraud-cell--fn strong{color:#983d48}
+.fraud-lab__diagnosis{border-left:4px solid #448c5d;border-radius:7px;padding:13px 18px;background:#ebf4ec;font-size:15px;color:#254b35;line-height:1.5}
+.fraud-lab__diagnosis b{color:#195439}
+.fraud-lab__diagnosis span{display:block;font-size:12px;color:#587064;margin-top:7px}
+.fraud-lab__questions{background:#fff;padding:15px 18px;border-radius:12px;border:1px solid #d5e4d9;margin-top:18px;font-size:13px;line-height:1.8;color:#45624f}
+.fraud-lab__source{font-size:11px!important;color:#698272}
+.day-two-final{background:linear-gradient(140deg,#f1f7f1,#fcfefa)}
+.day-two-deliverable{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:20px 0}
+.day-two-deliverable>div{border:1px solid #d1e3d4;background:white;border-radius:12px;padding:15px 12px}
+.day-two-deliverable span{display:block;font-size:11px;color:#458259;font-weight:800;margin-bottom:7px}
+.day-two-deliverable b{display:block;font-size:13px;color:#214e34;margin-bottom:7px}
+.day-two-deliverable small{display:block;font-size:11px;color:#6b816f;line-height:1.45}
+.day-two-final__call{border-top:1px solid #d7e6da;padding-top:16px}
+.day-two-final__call p{max-width:700px}
+@media(max-width:920px){
+ .fraud-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .day-two-deliverable{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:600px){
+ .day-two-studio__head{display:block}
+ .day-two-studio__date{display:inline-flex;flex-direction:row;gap:10px;align-items:center;margin:8px 0}
+ .day-two-agenda__row{grid-template-columns:28px 57px minmax(0,1fr);gap:8px;padding:12px 9px}
+ .day-two-agenda__row b{font-size:12px}
+ .day-two-research{grid-template-columns:55px minmax(0,1fr);padding:12px}
+ .day-two-research__number{font-size:37px}
+ .fraud-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .fraud-cell{padding:13px 10px}
+ .fraud-cell small{font-size:8px;min-height:33px}
+ .day-two-deliverable{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media print{.fraud-lab__control input[type=range]{display:none}.day-two-studio,.fraud-lab,.day-two-final{box-shadow:none;break-inside:avoid}}
