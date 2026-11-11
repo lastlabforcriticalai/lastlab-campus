@@ -67,7 +67,7 @@ test('market and lesson cards share explanatory 3D markup and accessibility attr
  );
  const markup=renderers.cryptoMarketPanel();
  assert.equal((markup.match(/class="metric-card metric-card--/g)||[]).length,9);
- assert.equal((markup.match(/class="metric-card__back"/g)||[]).length,9);
+ assert.equal((markup.match(/class="metric-card__face metric-card__back"/g)||[]).length,9);
  assert.equal((markup.match(/aria-pressed="false"/g)||[]).length,9);
  assert.equal((markup.match(/data-front-label=/g)||[]).length,9);
  assert.equal((markup.match(/data-back-label=/g)||[]).length,9);
@@ -82,7 +82,7 @@ test('market and lesson cards share explanatory 3D markup and accessibility attr
   const cards=(lesson.match(/class="metric-card metric-card--/g)||[]).length;
   lessonCards+=cards;
   assert.equal(cards,i===3?0:3,'Expected 3 cards in unit '+(i+1)+' (except market unit 4)');
-  if(cards)assert.match(lesson,/class="metric-card__back"/);
+  if(cards)assert.match(lesson,/class="metric-card__face metric-card__back"/);
  }
  assert.equal(lessonCards,27);
 });
