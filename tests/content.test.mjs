@@ -51,7 +51,7 @@ test('Colombia frontend displays updated charts and pesos, not Ecuador-based sim
  assert.match(ui,/Ingreso mensual estimado \(COP\)/);
  assert.match(ui,/Pagos mensuales de deudas \(COP\)/);
  assert.doesNotMatch(ui,/cooperativa ecuatoriana|Ingreso mensual estimado \(USD\)/);
- assert.match(html,/colombia-flacso-20261111/);
+ assert.match(html,/curso-colombia-20261111b/);
 });
 
 
@@ -85,5 +85,5 @@ test('responsive dashboard styling retains table readability and respects reduce
  for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
  assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
  assert.ok(html.includes('/course.css?v=observatorio-20261111'));
- assert.ok(html.includes('/course.js?v=observatorio-20261111'));
+ assert.ok(html.includes('/course.js?v=observatorio-20261111b'));
 });
