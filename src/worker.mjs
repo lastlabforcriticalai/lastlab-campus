@@ -198,6 +198,7 @@ async function adminStudents(env,u){if(u.role!=='admin')return fail('Acceso dene
       WHERE a.user_id=u.id AND a.course_id=?) AS avg_quiz_percent,
     p.updated_at AS last_progress_at
     FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.course_id=?
+    WHERE u.role='student'
     ORDER BY u.created_at DESC LIMIT 500`).bind(COURSE_ID,COURSE_ID,COURSE_ID).all();
   return reply({ok:true,students:rows.results||[]});
 }
