@@ -74,7 +74,7 @@ test('market and lesson cards share explanatory 3D markup and accessibility attr
  assert.ok(markup.includes('market-sources'), 'Citations remain available');
  assert.ok(markup.includes('<table class="market-history-table">'));
  assert.ok(markup.includes('11 NOV 2026'));
- assert.ok(!markup.includes('FLACSO') && !markup.includes('2023'));
+ assert.ok(!markup.includes('FLACSO') && !markup.includes('diapositiva 27'), 'No exponer material preparatorio, aunque el año 2023 sí debe figurar en la serie histórica');
  assert.ok(markup.includes('Capitalización no es dinero efectivamente invertido'));
  let lessonCards=0;
  for(let i=0;i<10;i++){
