@@ -7,7 +7,7 @@ const course=JSON.parse(data.replace(/^window\.COURSE=/,'').replace(/;$/,''));
 const ui=readFileSync(new URL('../public/course.js',import.meta.url),'utf8');
 const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
 
-test('Colombia FLACSO edition retains ten units and all progress indices',()=>{
+test('Colombia edition retains ten units and all progress indices',()=>{
  assert.equal(course.units.length,10);
  assert.equal(course.units.reduce((total,unit)=>total+unit.minutes,0),240);
  assert.ok(course.units.every(unit=>unit.sections.length>=6 && unit.questions.length>0));
@@ -34,7 +34,12 @@ test('contains dated full and partial Bitcoin price series and historical crypto
  assert.equal(course.bitcoinPrice2026.length,12);
  assert.ok(course.marketSnapshot.totalCapUSD>2_000_000_000_000);
  assert.ok(course.marketSnapshot.coinsTracked>15_000);
- assert.ok(course.marketSnapshot.historicFlacso);
+ assert.ok(!Object.hasOwn(course.marketSnapshot,'historicFlacso'));
+ assert.ok(!JSON.stringify(course).includes('FLACSO'));
+ assert.ok(!ui.includes('FLACSO'));
+ assert.ok(!ui.includes('1BSIfvHpQ-vJQdsB0L3MjDRH1lIo07AZ88RnWnqVlYe0'));
+ assert.ok(!ui.includes('23.700'));
+ assert.ok(!ui.includes('La diapositiva 27'));
  assert.ok(course.marketSnapshot.sources.length>=2);
  assert.match(course.marketSnapshot.asOf,/2026/);
 });
@@ -68,6 +73,7 @@ test('interactive market cards render nine distinct accessible definitions and r
  assert.ok(markup.includes('market-sources'), 'Citations remain available');
  assert.ok(markup.includes('<table class="market-history-table">'), 'History stays as a semantic table');
  assert.ok(markup.includes('11 NOV 2026'), 'Snapshot is explicitly dated');
+ assert.ok(!markup.includes('FLACSO') && !markup.includes('2023'), 'No reference to preparatory materials in the student market dashboard');
  assert.ok(markup.includes('Capitalización no es dinero efectivamente invertido'));
  assert.match(ui,/card\.setAttribute\('aria-pressed',String\(flipped\)\)/);
  assert.match(ui,/card\.querySelector\('\.metric-card__back'\)\.setAttribute\('aria-hidden'/);
