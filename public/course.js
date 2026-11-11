@@ -44,6 +44,24 @@ function blockchainVisual(){
  <rect x="643" y="181" width="244" height="102" rx="12" fill="#e1efe4" stroke="#397551"/><text x="765" y="209" text-anchor="middle" font-size="18" fill="#173d2b">Bloque N+1</text><text x="765" y="235" text-anchor="middle" font-size="13" fill="#173d2b">Contiene hash N</text><text x="765" y="256" text-anchor="middle" font-size="12" fill="#477358">verificación entre nodos</text>
  <text x="450" y="322" text-anchor="middle" font-size="14" fill="#365443">La historia aceptada depende del protocolo, los incentivos y quienes participan en la red.</text></svg><p><small>La cadena hace costosa la alteración del historial bajo supuestos concretos, pero no prueba que los datos externos sean verdaderos ni elimina actores intermediarios.</small></p></section>`;
 }
+function flipCardMarkup(metric,index,total){
+ const frontLabel=metric.label+": "+metric.value+(metric.suffix?" "+metric.suffix:"")+". Activá para ver la explicación.";
+ const backLabel=metric.label+". "+metric.hint+" Activá para volver al dato.";
+ return `<button class="metric-card metric-card--${metric.theme||"forest"} ${metric.concept?"metric-card--concept":""}" type="button" aria-pressed="false" aria-label="${esc(frontLabel)}" data-front-label="${esc(frontLabel)}" data-back-label="${esc(backLabel)}" data-angle="0">
+  <span class="metric-card__inner">
+   <span class="metric-card__face metric-card__front" aria-hidden="false">
+    <span class="metric-card__top"><span class="metric-card__index">${String(index+1).padStart(2,"0")} <small>/ ${String(total).padStart(2,"0")}</small></span><span class="metric-card__symbol" aria-hidden="true">↻</span></span>
+    <span class="metric-card__label">${esc(metric.label)}</span><strong class="metric-card__value">${esc(metric.value)}${metric.suffix?`<span class="metric-card__unit">${esc(metric.suffix)}</span>`:""}</strong>
+    <span class="metric-card__action">Clic para girar <span aria-hidden="true">↻</span></span>
+   </span>
+   <span class="metric-card__face metric-card__back" aria-hidden="true">
+    <span class="metric-card__back-eyebrow">PARA COMPRENDER</span>
+    <strong class="metric-card__back-title">${esc(metric.label)}</strong>
+    <span class="metric-card__explanation">${esc(metric.hint)}</span>
+    <span class="metric-card__back-action">Clic para volver <span aria-hidden="true">↶</span></span>
+   </span>
+  </span></button>`;
+}
 function cryptoMarketPanel(){
  const m=C.marketSnapshot;
  const compact=n=>{
@@ -62,26 +80,7 @@ function cryptoMarketPanel(){
   {label:"Oferta circulante BTC",value:"≈ "+(m.btcCirculatingApprox/1_000_000).toFixed(2).replace(".",",")+" millones",suffix:"BTC",theme:"sage",hint:"Bitcoin emitidos que se incluyen en la oferta circulante estimada. La métrica puede contener monedas perdidas o inaccesibles."},
   {label:"Volumen negociado / 24 h",value:"USD "+compact(m.volume24hUSDSnapshot),theme:"teal",hint:"Valor nominal declarado de operaciones durante 24 horas. No representa ingreso neto ni cantidad de usuarios y puede variar según mercados y metodología."}
  ];
- const cards=stats.map((metric,i)=>{
-  const frontLabel=metric.label+": "+metric.value+(metric.suffix?" "+metric.suffix:"")+". Activá para ver la explicación.";
-  const backLabel=metric.label+". "+metric.hint+" Activá para volver al dato.";
-  return `<button class="metric-card metric-card--${metric.theme}" type="button" aria-pressed="false" aria-label="${esc(frontLabel)}" data-front-label="${esc(frontLabel)}" data-back-label="${esc(backLabel)}">
-    <span class="metric-card__inner">
-      <span class="metric-card__face metric-card__front" aria-hidden="false">
-        <span class="metric-card__top"><span class="metric-card__index">${String(i+1).padStart(2,"0")} <small>/ ${String(stats.length).padStart(2,"0")}</small></span><span class="metric-card__symbol" aria-hidden="true">↗</span></span>
-        <span class="metric-card__label">${esc(metric.label)}</span>
-        <strong class="metric-card__value">${esc(metric.value)}${metric.suffix?`<span class="metric-card__unit">${esc(metric.suffix)}</span>`:""}</strong>
-        <span class="metric-card__action">Hacé clic para girar <span aria-hidden="true">↻</span></span>
-      </span>
-      <span class="metric-card__face metric-card__back" aria-hidden="true">
-        <span class="metric-card__back-eyebrow">QUÉ SIGNIFICA</span>
-        <strong class="metric-card__back-title">${esc(metric.label)}</strong>
-        <span class="metric-card__explanation">${esc(metric.hint)}</span>
-        <span class="metric-card__back-action">Clic para volver <span aria-hidden="true">↶</span></span>
-      </span>
-    </span>
-  </button>`;
- }).join("");
+ const cards=stats.map((metric,i)=>flipCardMarkup(metric,i,stats.length)).join("");
  const historic=C.bitcoinAnnualHistory,monthly=C.bitcoinPrice2026;
  return `<section class="panel market-panel">
    <div class="market-heading">
