@@ -112,7 +112,7 @@ test('browser animations use explicit keyframes to flip and grow despite CSS ani
  assert.match(ui,/target===180/);
  assert.match(ui,/Clic para girar/);
  assert.match(ui,/Clic para volver/);
- assert.match(html,/motion-waapi-20261111/);
+ assert.match(html,/clase2-colombia-20261111/);
 });
 
 
