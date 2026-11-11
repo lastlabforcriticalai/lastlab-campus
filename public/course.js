@@ -185,7 +185,7 @@ function activateFlipCards(){
     const animation=inner.animate([
      {transform:`rotateY(${angle}deg)`},
      {transform:`rotateY(${target}deg)`}
-    ],{duration:880,easing:"cubic-bezier(.2,.65,.19,1)",fill:"forwards"});
+    ],{duration:950,easing:"cubic-bezier(.45,0,.55,1)",fill:"forwards"});
     animation.onfinish=()=>{
      finish();
      animation.cancel();
@@ -194,7 +194,7 @@ function activateFlipCards(){
      if(card.dataset.animating==="true")finish();
     };
    }else{
-    inner.style.transition="transform 880ms cubic-bezier(.2,.65,.19,1)";
+    inner.style.transition="transform 950ms cubic-bezier(.45,0,.55,1)";
     inner.style.transform=`rotateY(${target}deg)`;
     inner.addEventListener("transitionend",finish,{once:true});
    }
