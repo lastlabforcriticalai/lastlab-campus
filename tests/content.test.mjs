@@ -84,6 +84,18 @@ test('responsive dashboard styling retains table readability and respects reduce
  const accountCss=readFileSync(new URL('../public/account.css',import.meta.url),'utf8');
  for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
  assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
- assert.ok(html.includes('/course.css?v=observatorio-20261111'));
- assert.ok(html.includes('/course.js?v=observatorio-20261111b'));
+ assert.ok(html.includes('/course.css?v=flip-3d-20261111'));
+ assert.ok(html.includes('/course.js?v=flip-3d-20261111'));
+});
+
+
+test('market cards enlarge on hover and rotate 180 degrees on click',()=>{
+ const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
+ assert.match(css,/\.metric-card:hover\s*\{[^}]*scale\(1\.05\)/);
+ assert.match(css,/\.metric-card\.is-flipped \.metric-card__inner\s*\{[^}]*rotateY\(180deg\)/);
+ assert.match(css,/\.metric-card__back\s*\{[^}]*rotateY\(180deg\)/);
+ assert.match(css,/backface-visibility:hidden/);
+ assert.match(ui,/inner\.style\.transform=flipped\?'rotateY\(180deg\)':'rotateY\(0deg\)'/);
+ assert.match(ui,/Hacé clic para girar/);
+ assert.match(ui,/Clic para volver/);
 });
