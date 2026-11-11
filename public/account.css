@@ -57,3 +57,32 @@
 .account-body #newBackupCodes{background:#eef5e9;border-radius:8px;padding:12px;margin-top:12px}
 .account-body #newBackupCodes textarea{display:block;width:100%;border:1px solid #9fbea4;border-radius:7px;background:white;font-size:12px;font-family:monospace;line-height:1.6;padding:8px;word-break:break-all;resize:vertical}
 @media(max-width:570px){.account-body .recovery-choices{gap:5px}.account-body .recovery-choices button{font-size:11px;padding:7px 8px}}
+
+
+/* LAST Lab · dashboard tables follow the same understated visual language as the course. */
+.account-body .table-wrap{
+  border:1px solid #d4e4d9;border-radius:12px;
+  background:#fff;box-shadow:0 5px 17px rgba(21,75,40,.04);
+  overflow:auto;max-width:100%;
+}
+.account-body .table-wrap table{border-collapse:separate;border-spacing:0}
+.account-body .table-wrap th{
+  position:sticky;top:0;z-index:1;
+  background:#e8f1e9;color:#2c6140;
+  font-weight:800;letter-spacing:.012em;
+  border-bottom:1px solid #d3e3d5;padding:12px 7px;
+}
+.account-body .table-wrap td{
+  padding:12px 7px;border-bottom:1px solid #e8eee8;
+  transition:background .18s ease,color .18s ease;
+}
+.account-body .table-wrap tbody tr:nth-child(2n) td{background:#fafcf9}
+.account-body .table-wrap tbody tr:last-child td{border-bottom:0}
+@media(hover:hover) and (pointer:fine){
+ .account-body .table-wrap tbody tr:hover td{
+  background:#e7f3e9;color:#19482b;
+ }
+ .account-body .table-wrap tbody tr:hover td:first-child{box-shadow:inset 3px 0 #4b9870}
+}
+.account-body .table-wrap button:focus-visible{outline:3px solid #318a5d;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.account-body .table-wrap td{transition:none!important}}
