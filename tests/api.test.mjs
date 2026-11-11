@@ -58,7 +58,7 @@ test('bootstrap: primera cuenta docente con código privado y registro público 
  assert.equal(r.status,403);
  r=await call(env,'/api/auth/register',{method:'POST',body:{username:'primero',displayName:'Docente Inicial',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
  assert.equal(r.status,201);assert.equal(r.data.user.role,'admin');
- r=await call(env,'/api/admin/students',{sessionCookie:r.cookie});assert.equal(r.status,200);
+ r=await call(env,'/api/admin/students',{sessionCookie:r.cookie});assert.equal(r.status,200);assert.deepEqual(r.data.students,[],'No mostrar la cuenta administradora en seguimiento de estudiantes');
  r=await call(env,'/api/auth/register',{method:'POST',body:{username:'segundo',password:'contrasenaDePrueba2026!',inviteCode:env.BOOTSTRAP_INVITE_CODE}});
  assert.equal(r.status,403);
 });
@@ -111,6 +111,9 @@ test('docente genera invitaciones privadas, alumno se registra y el código se c
  r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student1',password:'PasswordSeguroDePrueba2026!',inviteCode:invite}});
  assert.equal(r.status,201);assert.equal(r.data.user.role,'student');
  const studentCookie=r.cookie;
+ const roster=await call(env,'/api/admin/students',{sessionCookie:teacherCookie});
+ assert.equal(roster.status,200);
+ assert.deepEqual(roster.data.students.map(student=>student.username),['student1'],'La lista muestra solo estudiantes');
  r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:studentCookie,body:{count:1}});
  assert.equal(r.status,403);
  r=await call(env,'/api/auth/register',{method:'POST',body:{username:'student2',password:'PasswordSeguroDePrueba2026!',inviteCode:invite}});
