@@ -55,47 +55,62 @@ test('Colombia frontend displays updated charts and pesos, not Ecuador-based sim
 });
 
 
-test('interactive market cards render nine distinct accessible definitions and redesigned history table',()=>{
- const start=ui.indexOf('function cryptoMarketPanel(){');
+
+test('market and lesson cards share explanatory 3D markup and accessibility attributes',()=>{
+ const start=ui.indexOf('function flipCardMarkup(');
  const end=ui.indexOf('function unit(i){',start);
- assert.ok(start>=0&&end>start,'Market rendering function must exist');
- const render=new Function('C','esc','bitcoinChartSvg',ui.slice(start,end)+'\nreturn cryptoMarketPanel;')(
+ assert.ok(start>=0&&end>start,'Flip renderer must exist');
+ const renderers=new Function('C','esc','bitcoinChartSvg',ui.slice(start,end)+'\nreturn {cryptoMarketPanel,conceptCardsForUnit};')(
   course,
   value=>String(value).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x])),
   ()=>'<svg aria-label="Gráfico didáctico"></svg>'
  );
- const markup=render();
+ const markup=renderers.cryptoMarketPanel();
  assert.equal((markup.match(/class="metric-card metric-card--/g)||[]).length,9);
- assert.equal((markup.match(/class="metric-card__back"/g)||[]).length,9);
+ assert.equal((markup.match(/class="metric-card__face metric-card__back"/g)||[]).length,9);
  assert.equal((markup.match(/aria-pressed="false"/g)||[]).length,9);
  assert.equal((markup.match(/data-front-label=/g)||[]).length,9);
  assert.equal((markup.match(/data-back-label=/g)||[]).length,9);
  assert.ok(markup.includes('market-sources'), 'Citations remain available');
- assert.ok(markup.includes('<table class="market-history-table">'), 'History stays as a semantic table');
- assert.ok(markup.includes('11 NOV 2026'), 'Snapshot is explicitly dated');
- assert.ok(!markup.includes('FLACSO') && !markup.includes('2023'), 'No reference to preparatory materials in the student market dashboard');
+ assert.ok(markup.includes('<table class="market-history-table">'));
+ assert.ok(markup.includes('11 NOV 2026'));
+ assert.ok(!markup.includes('FLACSO') && !markup.includes('diapositiva 27'), 'No exponer material preparatorio, aunque el año 2023 sí debe figurar en la serie histórica');
  assert.ok(markup.includes('Capitalización no es dinero efectivamente invertido'));
- assert.match(ui,/card\.setAttribute\('aria-pressed',String\(flipped\)\)/);
- assert.match(ui,/card\.querySelector\('\.metric-card__back'\)\.setAttribute\('aria-hidden'/);
+ let lessonCards=0;
+ for(let i=0;i<10;i++){
+  const lesson=renderers.conceptCardsForUnit(i);
+  const cards=(lesson.match(/class="metric-card metric-card--/g)||[]).length;
+  lessonCards+=cards;
+  assert.equal(cards,i===3?0:3,'Expected 3 cards in unit '+(i+1)+' (except market unit 4)');
+  if(cards)assert.match(lesson,/class="metric-card__face metric-card__back"/);
+ }
+ assert.equal(lessonCards,27);
 });
 
-test('responsive dashboard styling retains table readability and respects reduced motion',()=>{
+test('responsive dashboard styling retains table readability and cards work independently of reduced motion preferences',()=>{
  const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
  const accountCss=readFileSync(new URL('../public/account.css',import.meta.url),'utf8');
  for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
  assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
- assert.ok(html.includes('/course.css?v=flip-3d-20261111'));
- assert.ok(html.includes('/course.js?v=flip-3d-20261111'));
+ assert.ok(html.includes('/course.css?v=motion-waapi-20261111'));
+ assert.ok(html.includes('/course.js?v=motion-waapi-20261111'));
 });
 
 
-test('market cards enlarge on hover and rotate 180 degrees on click',()=>{
+
+test('browser animations use explicit keyframes to flip and grow despite CSS animation preferences',()=>{
  const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
- assert.match(css,/\.metric-card:hover\s*\{[^}]*scale\(1\.05\)/);
- assert.match(css,/\.metric-card\.is-flipped \.metric-card__inner\s*\{[^}]*rotateY\(180deg\)/);
- assert.match(css,/\.metric-card__back\s*\{[^}]*rotateY\(180deg\)/);
+ assert.match(css,/\.metric-card:hover,\.metric-card\[data-hovered="true"\]/);
+ assert.match(css,/scale\(1\.075\)/);
+ assert.match(css,/\.metric-card\.is-flipped \.metric-card__inner/);
  assert.match(css,/backface-visibility:hidden/);
- assert.match(ui,/inner\.style\.transform=flipped\?'rotateY\(180deg\)':'rotateY\(0deg\)'/);
- assert.match(ui,/Hacé clic para girar/);
+ assert.match(ui,/function activateFlipCards\(/);
+ assert.match(ui,/inner\.animate\(/);
+ assert.match(ui,/card\.animate\(/);
+ assert.match(ui,/duration:950/);
+ assert.match(ui,/duration:320/);
+ assert.match(ui,/target===180/);
+ assert.match(ui,/Clic para girar/);
  assert.match(ui,/Clic para volver/);
+ assert.match(html,/motion-waapi-20261111/);
 });
