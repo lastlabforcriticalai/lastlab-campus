@@ -256,7 +256,28 @@ function activateFlipCards(){
   });
  });
 }
-function bind(){activateFlipCards();
+function bindFraudWorkshop(){
+ const slider=document.getElementById("fraudThreshold");
+ if(!slider)return;
+ const legit=[5,10,12,18,23,29,31,37,41,48,53,56,61,66,72],fraud=[34,52,65,81,94];
+ function refresh(){
+  const threshold=Number(slider.value);
+  const tp=fraud.filter(x=>x>=threshold).length;
+  const fn=fraud.length-tp;
+  const fp=legit.filter(x=>x>=threshold).length;
+  const tn=legit.length-fp;
+  document.getElementById("fraudThresholdValue").textContent=threshold+" / 100";
+  for(const [id,n] of [["fraudTP",tp],["fraudFP",fp],["fraudFN",fn],["fraudTN",tn]])document.getElementById(id).textContent=String(n);
+  const detection=(100*tp/fraud.length).toFixed(0).replace(".",",");
+  const falseAlarm=(100*fp/legit.length).toFixed(0).replace(".",",");
+  document.getElementById("fraudDiagnosis").innerHTML=
+   "<b>"+detection+" % de los fraudes detectados</b> · "+falseAlarm+" % de los pagos legítimos bloqueados."+
+   "<span>Con este umbral se bloquean "+(tp+fp)+" de las 20 operaciones. Para evaluar daños reales harían falta datos representativos, costos, contexto y canales de revisión.</span>";
+ }
+ slider.addEventListener("input",refresh);
+ refresh();
+}
+function bind(){activateFlipCards();bindFraudWorkshop();
 if($('moduleGrade')){let i=+$('moduleGrade').dataset.unit,quiz=MODULES[i].quiz;let current=state.moduleQuiz[i]||{answers:{}};document.querySelectorAll('input[name^="modq-"]').forEach(el=>el.onchange=()=>{current.answers=current.answers||{};let j=Number(el.name.split('-')[2]);current.answers[j]=Number(el.value);current.graded=false;state.moduleQuiz[i]=current;save()});$('moduleGrade').onclick=()=>{current.answers=current.answers||{};current.graded=true;current.score=quiz.filter((q,j)=>current.answers[j]===q.c).length;state.moduleQuiz[i]=current;save();if(window.LASTAuth?.isLoggedIn())window.LASTAuth.submitQuiz(i,current.answers).then(result=>{current.score=result.score;current.graded=true;current.verified=true;state.moduleQuiz[i]=current;save();let out=$('moduleSummary');if(out)out.textContent='Resultado verificado: '+result.score+' de '+result.total+' correctas. Intento registrado en tu cuenta.'}).catch(err=>{let out=$('moduleSummary');if(out)out.textContent='Resultado local: '+current.score+'/'+quiz.length+'. No pudo registrarse en el servidor: '+err.message;});quiz.forEach((q,j)=>{$('mqf-'+j).textContent=(current.answers[j]===q.c?'✓ Correcta. ':'✗ Respuesta correcta: '+q.a[q.c]+'. ')+q.why});$('moduleSummary').textContent='Resultado: '+current.score+' de '+quiz.length+' correctas. '+(current.score===quiz.length?'¡Dominás los conceptos centrales!':'Revisá las explicaciones y volvé a intentarlo.')};$('moduleReset').onclick=()=>{delete state.moduleQuiz[i];save();route()}}let done=$('doneBtn');if(done)done.onclick=()=>{let i=+done.dataset.index;state.done=state.done.includes(i)?state.done.filter(x=>x!==i):[...state.done,i].sort((a,b)=>a-b);save();route()};if($('hashBtn')){$('hashBtn').onclick=async()=>{let s=$('blockText').value,n=$('nonce').value;state.block=s;state.nonce=n;save();let v=s+'|'+n;try{if(!crypto||!crypto.subtle)throw Error('Sin soporte Web Crypto');let h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));let hex=Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');$('hashOutput').innerHTML=`<div>SHA-256 de texto + nonce:</div><code style="overflow-wrap:anywhere">${hex}</code><p>Probá cambiar un carácter y comparar.</p>`}catch(e){$('hashOutput').textContent='El cálculo requiere un contexto seguro (HTTPS o localhost). Al publicar en Cloudflare HTTPS estará disponible.'}};}
 if($('income')){let update=()=>{['income','debt','threshold'].forEach(k=>{state.co[k]=Number($(k).value);$(k+'V').textContent=(k==='threshold'?'Máximo puntaje de riesgo: ': 'COP ')+ (k==='threshold'?state.co[k]:state.co[k].toLocaleString('es-CO'))+(k==='threshold'?'/100':'')});state.co.history=Number($('history').value);let ratio=state.co.income?state.co.debt/state.co.income:1;let score=Math.min(100,Math.round(10+ratio*65+(2-state.co.history)*14));let approved=score<=state.co.threshold;let o=$('creditOutput');o.innerHTML=`<div><small>Relación de pagos de deuda / ingresos: <b>${(ratio*100).toFixed(1)}%</b></small></div><strong>Puntaje didáctico: ${score}/100</strong><p class="${approved?'good':'error'}"><b>${approved?'Cumple la regla ficticia':'No cumple la regla ficticia'}</b> con umbral de ${state.co.threshold}/100.</p><p>Fórmula: 10 + 65 × deuda/ingreso + 14 × (2 − categoría de historial), limitado a 100 y redondeado. <b>NO es probabilidad ni asesoramiento crediticio.</b></p>`;save()};['income','debt','threshold','history'].forEach(k=>$(k).addEventListener('input',update));$('history').value=state.co.history;update()}
 if($('taskText')){$('taskText').oninput=()=>{state.task=$('taskText').value;save()};$('taskDownload').onclick=()=>download('propuesta-cooperativa.txt',state.task||'Propuesta pendiente');$('taskCopy').onclick=()=>{navigator.clipboard?.writeText($('taskText').value).then(()=>{$('taskCopy').textContent='Copiado ✓'}).catch(()=>alert('Seleccioná el texto y copialo manualmente.'))}};
