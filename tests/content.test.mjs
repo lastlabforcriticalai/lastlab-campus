@@ -48,3 +48,36 @@ test('Colombia frontend displays updated charts and pesos, not Ecuador-based sim
  assert.doesNotMatch(ui,/cooperativa ecuatoriana|Ingreso mensual estimado \(USD\)/);
  assert.match(html,/colombia-flacso-20261111/);
 });
+
+
+test('interactive market cards render nine distinct accessible definitions and redesigned history table',()=>{
+ const start=ui.indexOf('function cryptoMarketPanel(){');
+ const end=ui.indexOf('function unit(i){',start);
+ assert.ok(start>=0&&end>start,'Market rendering function must exist');
+ const render=new Function('C','esc','bitcoinChartSvg',ui.slice(start,end)+'\nreturn cryptoMarketPanel;')(
+  course,
+  value=>String(value).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x])),
+  ()=>'<svg aria-label="Gráfico didáctico"></svg>'
+ );
+ const markup=render();
+ assert.equal((markup.match(/class="metric-card metric-card--/g)||[]).length,9);
+ assert.equal((markup.match(/class="metric-card__back"/g)||[]).length,9);
+ assert.equal((markup.match(/aria-pressed="false"/g)||[]).length,9);
+ assert.equal((markup.match(/data-front-label=/g)||[]).length,9);
+ assert.equal((markup.match(/data-back-label=/g)||[]).length,9);
+ assert.ok(markup.includes('market-sources'), 'Citations remain available');
+ assert.ok(markup.includes('<table class="market-history-table">'), 'History stays as a semantic table');
+ assert.ok(markup.includes('11 NOV 2026'), 'Snapshot is explicitly dated');
+ assert.ok(markup.includes('Capitalización no es dinero efectivamente invertido'));
+ assert.match(ui,/card\.setAttribute\('aria-pressed',String\(flipped\)\)/);
+ assert.match(ui,/card\.querySelector\('\.metric-card__back'\)\.setAttribute\('aria-hidden'/);
+});
+
+test('responsive dashboard styling retains table readability and respects reduced motion',()=>{
+ const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
+ const accountCss=readFileSync(new URL('../public/account.css',import.meta.url),'utf8');
+ for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
+ assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
+ assert.ok(html.includes('/course.css?v=observatorio-20261111'));
+ assert.ok(html.includes('/course.js?v=observatorio-20261111'));
+});
