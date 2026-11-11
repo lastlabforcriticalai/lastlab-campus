@@ -51,7 +51,7 @@ test('Colombia frontend displays updated charts and pesos, not Ecuador-based sim
  assert.match(ui,/Ingreso mensual estimado \(COP\)/);
  assert.match(ui,/Pagos mensuales de deudas \(COP\)/);
  assert.doesNotMatch(ui,/cooperativa ecuatoriana|Ingreso mensual estimado \(USD\)/);
- assert.match(html,/curso-colombia-20261111b/);
+ assert.match(html,/clase2-colombia-20261111/);
 });
 
 
@@ -92,8 +92,8 @@ test('responsive dashboard styling retains table readability and cards work inde
  const accountCss=readFileSync(new URL('../public/account.css',import.meta.url),'utf8');
  for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
  assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
- assert.ok(html.includes('/course.css?v=motion-waapi-20261111'));
- assert.ok(html.includes('/course.js?v=motion-waapi-20261111'));
+ assert.ok(html.includes('/course.css?v=clase2-colombia-20261111'));
+ assert.ok(html.includes('/course.js?v=clase2-colombia-20261111'));
 });
 
 
@@ -113,4 +113,48 @@ test('browser animations use explicit keyframes to flip and grow despite CSS ani
  assert.match(ui,/Clic para girar/);
  assert.match(ui,/Clic para volver/);
  assert.match(html,/motion-waapi-20261111/);
+});
+
+
+test('second day follows verified institutional schedule and has three dedicated learning activities',()=>{
+ const start=ui.indexOf('function dayTwoIntroPanel(){');
+ const end=ui.indexOf('function unit(i){',start);
+ assert.ok(start>0&&end>start);
+ const blocks=new Function('esc',ui.slice(start,end)+'\nreturn {dayTwoIntroPanel,fraudWorkshopPanel,finalDayTwoPanel};')(
+  value=>String(value).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))
+ );
+ const agenda=blocks.dayTwoIntroPanel();
+ const fraud=blocks.fraudWorkshopPanel();
+ const final=blocks.finalDayTwoPanel();
+ assert.ok(agenda.includes('25 NOV')&&agenda.includes('13:00–15:00'));
+ assert.ok(agenda.includes('96,3 %')&&agenda.includes('35,5 %'));
+ assert.ok(agenda.includes('47'));
+ assert.ok(agenda.includes('bancadelasoportunidades.gov.co'));
+ assert.equal((agenda.match(/day-two-agenda__row/g)||[]).length,5);
+ assert.ok(fraud.includes('fraudThreshold')&&fraud.includes('fraudFP')&&fraud.includes('fraudFN'));
+ assert.ok(fraud.includes('20 operaciones'));
+ assert.ok(final.includes('Reversibilidad'));
+ assert.ok(final.includes('250 palabras'));
+ assert.ok(ui.includes('bindFraudWorkshop();'));
+ assert.match(ui,/const legit=\[5,10,12,18,23,29,31,37,41,48,53,56,61,66,72\],fraud=\[34,52,65,81,94\]/);
+ assert.match(ui,/const tp=fraud.filter\(x=>x>=threshold\).length/);
+ assert.match(ui,/const fp=legit.filter\(x=>x>=threshold\).length/);
+});
+
+test('second day content contains current Colombian source-based research and keeps existing structure',()=>{
+ const day2=course.units.slice(5);
+ assert.equal(day2.length,5);
+ assert.deepEqual(day2.map(x=>x.day),[2,2,2,2,2]);
+ assert.equal(day2.reduce((total,unit)=>total+unit.minutes,0),120);
+ const body=day2.flatMap(unit=>unit.sections.flatMap(x=>x.paragraphs)).join(' ');
+ assert.match(body,/47 entidades/);
+ assert.match(body,/96,3 %/);
+ assert.match(body,/falso positivo/);
+ assert.match(body,/revisión humana/);
+ assert.match(body,/Colombia/);
+ for(const url of [
+ 'https://www.bancadelasoportunidades.gov.co/es/noticias/banca-de-las-oportunidades-y-la-superfinanciera-lanzan-el-reporte-de-inclusion-financiera',
+ 'https://www.superfinanciera.gov.co/publicaciones/10116314/historico-publicaciones/',
+ 'https://sedeelectronica.sic.gov.co/publicaciones/boletin-juridico/concepto/regimen-de-tratamiento-de-datos-personales-debe-aplicarse-al-margen-de-los-procedimientos-metodologias-o'
+ ])assert.ok(course.references.some(r=>r.url===url));
 });
