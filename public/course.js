@@ -133,19 +133,75 @@ function library(){return `<div class="unitHead"><div class="eyebrow">VIDEOTECA 
 const terms={'API':'Interfaz de programación que permite interacciones controladas entre sistemas.','Blockchain':'Modalidad de DLT que organiza datos en bloques vinculados criptográficamente.','CBDC':'Moneda digital emitida por un banco central.','Consenso':'Conjunto de reglas para acordar el estado de un registro compartido.','Crédito digital':'Originación y gestión de préstamos a través de canales tecnológicos.','DeFi':'Servicios financieros implementados mediante protocolos y contratos programables.','DLT':'Tecnología de registros distribuidos; no toda DLT emplea bloques encadenados.','Fintech':'Innovación tecnológica aplicada a actividades y servicios financieros.','Hash':'Función que transforma datos en una huella de longitud fija.','IA generativa':'Modelos capaces de producir nuevos contenidos, como texto o código.','KYC':'Know Your Customer: procesos de identificación y conocimiento del cliente.','Machine learning':'Métodos que ajustan modelos estadísticos a patrones de datos.','Oráculo':'Componente que introduce información externa en un contrato programable.','Proof of Stake':'Consenso mediante validadores que comprometen valor económico.','Proof of Work':'Consenso con pruebas de trabajo computacional.','Scoring':'Estimación cuantitativa utilizada para apoyar decisiones, por ejemplo crediticias.','Smart contract':'Programa que ejecuta instrucciones cuando se satisfacen condiciones.','Stablecoin':'Token diseñado para mantener referencia a otro activo o unidad de valor.','Tokenización':'Representación digital de un activo o derecho.','Regtech':'Tecnologías orientadas a funciones de regulación y cumplimiento.'};
 function glossary(){return `<div class="unitHead"><div class="eyebrow">CONSULTA Y REFERENCIAS</div><h1>Glosario y biblioteca de fuentes</h1><p class="lead">Definiciones operativas breves y enlaces de consulta. Las fuentes jurídicas deben contrastarse con actualizaciones regulatorias antes de decisiones reales.</p></div><input id="glossSearch" class="searchInput" type="search" placeholder="Buscar un concepto (blockchain, scoring, DLT...)" aria-label="Buscar glosario"><div class="glossary" id="glossResults">${Object.entries(terms).map(([k,v])=>`<div data-name="${esc(k.toLowerCase())}"><b>${esc(k)}</b><p>${esc(v)}</p></div>`).join('')}</div><h2 class="sectionTitle">Fuentes para profundizar</h2><div class="panel">${C.references.map(r=>`<div class="resource"><div>${link(r.url,r.name)}<small>${esc(r.why)}</small></div></div>`).join('')}</div><section class="panel cream"><h2>Nota metodológica y límites</h2><p>La web ofrece una introducción formativa; simplifica arquitecturas reales para poder analizarlas en cuatro horas. Los casos y cifras de los simuladores son enteramente ficticios. Los enlaces y normas deben revisarse al utilizar el curso en nuevas ediciones. Si iniciás sesión, el progreso y las evaluaciones se sincronizan con Cloudflare D1; algunas notas personales también pueden sincronizarse. No ingreses datos reales de otras personas ni información financiera sensible.</p></section>`}
 function route(){let hash=location.hash||'#inicio';let match=hash.match(/^#unidad-(\d+)$/);$('main').innerHTML=match?unit(Math.max(0,Math.min(9,Number(match[1])-1))):hash==='#simuladores'?simulators():hash==='#evaluacion'?assessment():hash==='#biblioteca'?library():hash==='#glosario'?glossary():home();nav();bind();try{document.querySelector('.sidebar').scrollTop=0;document.documentElement.scrollTop=0;document.body.scrollTop=0;window.scrollTo(0,0)}catch(e){};}
-function bind(){
- document.querySelectorAll('.metric-card').forEach(card=>{
-   card.addEventListener('click',()=>{
-     const flipped=card.classList.toggle('is-flipped');
-     // Keep the rotateY transition explicit so the flip remains visible across CSS caches.
-     const inner=card.querySelector('.metric-card__inner');
-     if(inner)inner.style.transform=flipped?'rotateY(180deg)':'rotateY(0deg)';
-     card.setAttribute('aria-pressed',String(flipped));
-     card.setAttribute('aria-label',flipped?card.dataset.backLabel:card.dataset.frontLabel);
-     card.querySelector('.metric-card__front').setAttribute('aria-hidden',String(flipped));
-     card.querySelector('.metric-card__back').setAttribute('aria-hidden',String(!flipped));
-   });
+function activateFlipCards(){
+ document.querySelectorAll(".metric-card").forEach(card=>{
+  const inner=card.querySelector(".metric-card__inner");
+  const front=card.querySelector(".metric-card__front");
+  const back=card.querySelector(".metric-card__back");
+  if(!inner||!front||!back)return;
+  let angle=0;
+  let hoverOn=false;
+  let hoverAnim=null;
+  const hoverTransform=on=>on?"translateY(-4px) scale(1.075)":"translateY(0px) scale(1)";
+  const setHover=on=>{
+   if(on===hoverOn)return;
+   const initial=hoverTransform(hoverOn);
+   hoverOn=on;
+   card.dataset.hovered=on?"true":"false";
+   if(hoverAnim){hoverAnim.cancel();hoverAnim=null}
+   if(card.animate){
+    hoverAnim=card.animate([{transform:initial},{transform:hoverTransform(on)}],{
+     duration:320,easing:"cubic-bezier(.16,.82,.25,1)",fill:"forwards"
+    });
+    hoverAnim.onfinish=()=>{
+     card.style.transform=hoverTransform(on);
+     hoverAnim.cancel();
+     hoverAnim=null;
+    };
+   }else{
+    card.style.transition="transform 320ms ease";
+    card.style.transform=hoverTransform(on);
+   }
+   card.style.zIndex=on?"12":"";
+  };
+  card.addEventListener("mouseenter",()=>setHover(true));
+  card.addEventListener("mouseleave",()=>setHover(false));
+  card.addEventListener("click",()=>{
+   if(card.dataset.animating==="true")return;
+   const target=angle===0?180:0, flipped=target===180;
+   card.dataset.animating="true";
+   card.classList.toggle("is-flipped",flipped);
+   card.setAttribute("aria-pressed",String(flipped));
+   card.setAttribute("aria-label",flipped?card.dataset.backLabel:card.dataset.frontLabel);
+   front.setAttribute("aria-hidden",String(flipped));
+   back.setAttribute("aria-hidden",String(!flipped));
+   const finish=()=>{
+    angle=target;
+    inner.style.transform=`rotateY(${target}deg)`;
+    card.dataset.angle=String(target);
+    delete card.dataset.animating;
+   };
+   if(inner.animate){
+    const animation=inner.animate([
+     {transform:`rotateY(${angle}deg)`},
+     {transform:`rotateY(${target}deg)`}
+    ],{duration:880,easing:"cubic-bezier(.2,.65,.19,1)",fill:"forwards"});
+    animation.onfinish=()=>{
+     finish();
+     animation.cancel();
+    };
+    animation.oncancel=()=>{
+     if(card.dataset.animating==="true")finish();
+    };
+   }else{
+    inner.style.transition="transform 880ms cubic-bezier(.2,.65,.19,1)";
+    inner.style.transform=`rotateY(${target}deg)`;
+    inner.addEventListener("transitionend",finish,{once:true});
+   }
+  });
  });
+}
+function bind(){activateFlipCards();
 if($('moduleGrade')){let i=+$('moduleGrade').dataset.unit,quiz=MODULES[i].quiz;let current=state.moduleQuiz[i]||{answers:{}};document.querySelectorAll('input[name^="modq-"]').forEach(el=>el.onchange=()=>{current.answers=current.answers||{};let j=Number(el.name.split('-')[2]);current.answers[j]=Number(el.value);current.graded=false;state.moduleQuiz[i]=current;save()});$('moduleGrade').onclick=()=>{current.answers=current.answers||{};current.graded=true;current.score=quiz.filter((q,j)=>current.answers[j]===q.c).length;state.moduleQuiz[i]=current;save();if(window.LASTAuth?.isLoggedIn())window.LASTAuth.submitQuiz(i,current.answers).then(result=>{current.score=result.score;current.graded=true;current.verified=true;state.moduleQuiz[i]=current;save();let out=$('moduleSummary');if(out)out.textContent='Resultado verificado: '+result.score+' de '+result.total+' correctas. Intento registrado en tu cuenta.'}).catch(err=>{let out=$('moduleSummary');if(out)out.textContent='Resultado local: '+current.score+'/'+quiz.length+'. No pudo registrarse en el servidor: '+err.message;});quiz.forEach((q,j)=>{$('mqf-'+j).textContent=(current.answers[j]===q.c?'✓ Correcta. ':'✗ Respuesta correcta: '+q.a[q.c]+'. ')+q.why});$('moduleSummary').textContent='Resultado: '+current.score+' de '+quiz.length+' correctas. '+(current.score===quiz.length?'¡Dominás los conceptos centrales!':'Revisá las explicaciones y volvé a intentarlo.')};$('moduleReset').onclick=()=>{delete state.moduleQuiz[i];save();route()}}let done=$('doneBtn');if(done)done.onclick=()=>{let i=+done.dataset.index;state.done=state.done.includes(i)?state.done.filter(x=>x!==i):[...state.done,i].sort((a,b)=>a-b);save();route()};if($('hashBtn')){$('hashBtn').onclick=async()=>{let s=$('blockText').value,n=$('nonce').value;state.block=s;state.nonce=n;save();let v=s+'|'+n;try{if(!crypto||!crypto.subtle)throw Error('Sin soporte Web Crypto');let h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));let hex=Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');$('hashOutput').innerHTML=`<div>SHA-256 de texto + nonce:</div><code style="overflow-wrap:anywhere">${hex}</code><p>Probá cambiar un carácter y comparar.</p>`}catch(e){$('hashOutput').textContent='El cálculo requiere un contexto seguro (HTTPS o localhost). Al publicar en Cloudflare HTTPS estará disponible.'}};}
 if($('income')){let update=()=>{['income','debt','threshold'].forEach(k=>{state.co[k]=Number($(k).value);$(k+'V').textContent=(k==='threshold'?'Máximo puntaje de riesgo: ': 'COP ')+ (k==='threshold'?state.co[k]:state.co[k].toLocaleString('es-CO'))+(k==='threshold'?'/100':'')});state.co.history=Number($('history').value);let ratio=state.co.income?state.co.debt/state.co.income:1;let score=Math.min(100,Math.round(10+ratio*65+(2-state.co.history)*14));let approved=score<=state.co.threshold;let o=$('creditOutput');o.innerHTML=`<div><small>Relación de pagos de deuda / ingresos: <b>${(ratio*100).toFixed(1)}%</b></small></div><strong>Puntaje didáctico: ${score}/100</strong><p class="${approved?'good':'error'}"><b>${approved?'Cumple la regla ficticia':'No cumple la regla ficticia'}</b> con umbral de ${state.co.threshold}/100.</p><p>Fórmula: 10 + 65 × deuda/ingreso + 14 × (2 − categoría de historial), limitado a 100 y redondeado. <b>NO es probabilidad ni asesoramiento crediticio.</b></p>`;save()};['income','debt','threshold','history'].forEach(k=>$(k).addEventListener('input',update));$('history').value=state.co.history;update()}
 if($('taskText')){$('taskText').oninput=()=>{state.task=$('taskText').value;save()};$('taskDownload').onclick=()=>download('propuesta-cooperativa.txt',state.task||'Propuesta pendiente');$('taskCopy').onclick=()=>{navigator.clipboard?.writeText($('taskText').value).then(()=>{$('taskCopy').textContent='Copiado ✓'}).catch(()=>alert('Seleccioná el texto y copialo manualmente.'))}};
