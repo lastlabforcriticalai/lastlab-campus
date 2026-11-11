@@ -238,3 +238,52 @@ html,body{max-width:100%;overflow-x:clip}
  .market-panel,.chart-panel{box-shadow:none}
  .market-sources__body{display:block}
 }
+
+
+/* V2 · Giro real en 3D + ampliación sutil al posar el puntero. */
+.metric-card{
+  position:relative;
+  z-index:0;
+  transform:translate3d(0,0,0) scale(1);
+  transform-origin:center center;
+  transition:transform .27s cubic-bezier(.2,.75,.2,1),filter .27s ease;
+  perspective:1100px;
+  -webkit-perspective:1100px;
+  overflow:visible;
+}
+.metric-card__inner{
+  transform:rotateY(0deg);
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  transition:transform .78s cubic-bezier(.2,.68,.2,1);
+  will-change:transform;
+}
+.metric-card.is-flipped .metric-card__inner{transform:rotateY(180deg)}
+.metric-card__front{
+  transform:rotateY(0deg) translateZ(1px);
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+}
+.metric-card__back{
+  transform:rotateY(180deg) translateZ(1px);
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+}
+.metric-card__face{
+  -webkit-transform-style:flat;
+  transform-style:flat;
+}
+@media (hover:hover){
+  .metric-card:hover{
+    z-index:5;
+    transform:translate3d(0,-3px,0) scale(1.05);
+    filter:drop-shadow(0 14px 16px rgba(21,74,38,.12));
+  }
+  .metric-card.is-flipped:hover{
+    transform:translate3d(0,-3px,0) scale(1.05);
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .metric-card__inner{transition:none!important}
+  .metric-card:hover,.metric-card.is-flipped:hover{transform:none!important;filter:none!important}
+}

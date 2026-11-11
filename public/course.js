@@ -71,13 +71,13 @@ function cryptoMarketPanel(){
         <span class="metric-card__top"><span class="metric-card__index">${String(i+1).padStart(2,"0")} <small>/ ${String(stats.length).padStart(2,"0")}</small></span><span class="metric-card__symbol" aria-hidden="true">↗</span></span>
         <span class="metric-card__label">${esc(metric.label)}</span>
         <strong class="metric-card__value">${esc(metric.value)}${metric.suffix?`<span class="metric-card__unit">${esc(metric.suffix)}</span>`:""}</strong>
-        <span class="metric-card__action">Explorar indicador <span aria-hidden="true">↗</span></span>
+        <span class="metric-card__action">Hacé clic para girar <span aria-hidden="true">↻</span></span>
       </span>
       <span class="metric-card__face metric-card__back" aria-hidden="true">
         <span class="metric-card__back-eyebrow">QUÉ SIGNIFICA</span>
         <strong class="metric-card__back-title">${esc(metric.label)}</strong>
         <span class="metric-card__explanation">${esc(metric.hint)}</span>
-        <span class="metric-card__back-action">Volver al dato <span aria-hidden="true">↶</span></span>
+        <span class="metric-card__back-action">Clic para volver <span aria-hidden="true">↶</span></span>
       </span>
     </span>
   </button>`;
@@ -90,7 +90,7 @@ function cryptoMarketPanel(){
        <p class="market-subtitle">Tamaño, concentración y límites de las cifras que circulan sobre las criptomonedas.</p></div>
      <span class="market-date" title="Corte histórico: no es una cotización en vivo"><span class="market-date__dot"></span> CORTE · 11 NOV 2026</span>
    </div>
-   <div class="market-grid-heading"><span>RADIOGRAFÍA DEL MERCADO</span><span class="market-grid-hint">Pasá el mouse y hacé clic en cada tarjeta para conocer su significado <span aria-hidden="true">↗</span></span></div>
+   <div class="market-grid-heading"><span>RADIOGRAFÍA DEL MERCADO</span><span class="market-grid-hint">Acercá el mouse para ampliar cada tarjeta y hacé clic para girarla <span aria-hidden="true">↗</span></span></div>
    <div class="market-data-grid">${cards}</div>
    <div class="market-bottom">
       <div class="market-insight"><span class="market-insight__symbol" aria-hidden="true">✳</span><p><b>La cifra nunca explica todo.</b> Capitalización no es dinero efectivamente invertido; «cantidad de criptos» no equivale a proyectos viables, y volumen no mide necesariamente actividad económica productiva.</p></div>
@@ -128,6 +128,9 @@ function bind(){
  document.querySelectorAll('.metric-card').forEach(card=>{
    card.addEventListener('click',()=>{
      const flipped=card.classList.toggle('is-flipped');
+     // Keep the rotateY transition explicit so the flip remains visible across CSS caches.
+     const inner=card.querySelector('.metric-card__inner');
+     if(inner)inner.style.transform=flipped?'rotateY(180deg)':'rotateY(0deg)';
      card.setAttribute('aria-pressed',String(flipped));
      card.setAttribute('aria-label',flipped?card.dataset.backLabel:card.dataset.frontLabel);
      card.querySelector('.metric-card__front').setAttribute('aria-hidden',String(flipped));
