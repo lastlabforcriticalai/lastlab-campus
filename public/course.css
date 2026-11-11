@@ -224,8 +224,7 @@ html,body{max-width:100%;overflow-x:clip}
  .market-table-title{display:block}.market-table-title span{display:block;margin-top:3px}
 }
 @media(prefers-reduced-motion:reduce){
- .metric-card,.metric-card__inner,.metric-card__symbol,.metric-card__action span,.market-history-table td,.market-sources__cue>span{transition:none!important}
- .metric-card:hover,.metric-card:active{transform:none!important}
+ .metric-card__symbol,.metric-card__action span,.market-history-table td,.market-sources__cue>span{transition:none!important}
 }
 @media print{
  .market-data-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -283,7 +282,62 @@ html,body{max-width:100%;overflow-x:clip}
     transform:translate3d(0,-3px,0) scale(1.05);
   }
 }
-@media (prefers-reduced-motion:reduce){
-  .metric-card__inner{transition:none!important}
-  .metric-card:hover,.metric-card.is-flipped:hover{transform:none!important;filter:none!important}
+
+
+
+/* Animación deliberada del campus: también funciona con pantallas táctiles híbridas.
+   Los botones mantienen controles de teclado; el movimiento se ejecuta en JS/WAAPI. */
+.market-data-grid,.concept-card-grid{overflow:visible}
+.market-panel,.concept-card-panel{overflow:visible}
+.metric-card{
+ position:relative;
+ transform:translateY(0) scale(1);
+ transform-origin:50% 50%;
+ overflow:visible;
+ will-change:transform;
+ isolation:auto;
+}
+.metric-card:hover,.metric-card[data-hovered="true"]{
+ transform:translateY(-4px) scale(1.075);
+ z-index:12;
+ filter:drop-shadow(0 15px 19px rgba(18,69,40,.16))
+}
+.metric-card__inner{
+ display:block;
+ transform:rotateY(0deg);
+ transform-style:preserve-3d;
+ -webkit-transform-style:preserve-3d;
+ will-change:transform;
+}
+.metric-card.is-flipped .metric-card__inner{transform:rotateY(180deg)}
+.metric-card__front{transform:rotateY(0deg) translateZ(1px);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.metric-card__back{transform:rotateY(180deg) translateZ(1px);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.metric-card__face{pointer-events:none}
+.metric-card__value{font-variant-numeric:tabular-nums}
+.metric-card:focus-visible{z-index:15}
+.concept-card-panel{
+ padding:clamp(21px,2.8vw,31px);
+ border-color:#d5e5d7;
+ background:linear-gradient(135deg,#f8fbf8,#eef6ef);
+ border-radius:20px;
+}
+.concept-card-panel>h2{
+ font:600 clamp(23px,2.6vw,30px)/1.2 'Source Serif 4',Georgia,serif;
+ letter-spacing:-.025em;color:#204c32;margin:8px 0;
+}
+.concept-card-panel>p{font-size:13px;color:#557366;margin:0 0 20px}
+.concept-card-grid{margin:0}
+.metric-card--concept{height:218px}
+.metric-card--concept .metric-card__label{margin-top:14px}
+.metric-card--concept .metric-card__value{font-size:clamp(21px,2.2vw,26px);line-height:1.24}
+.metric-card--concept .metric-card__back-title{font-size:14px}
+.metric-card--concept .metric-card__explanation{font-size:11.7px;line-height:1.6}
+@media(max-width:880px){.concept-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.concept-card-grid{grid-template-columns:1fr}}
+@media print{
+ .metric-card{transform:none!important}
+ .metric-card__inner{transform:none!important}
+ .metric-card__back{display:none!important}
+ .metric-card__front{display:flex!important}
+ .metric-card__face{pointer-events:auto}
 }
