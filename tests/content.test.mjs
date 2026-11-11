@@ -107,7 +107,7 @@ test('browser animations use explicit keyframes to flip and grow despite CSS ani
  assert.match(ui,/function activateFlipCards\(/);
  assert.match(ui,/inner\.animate\(/);
  assert.match(ui,/card\.animate\(/);
- assert.match(ui,/duration:880/);
+ assert.match(ui,/duration:950/);
  assert.match(ui,/duration:320/);
  assert.match(ui,/target===180/);
  assert.match(ui,/Clic para girar/);
