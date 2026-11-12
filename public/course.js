@@ -281,6 +281,13 @@ function realBitcoinDiagram(){
  return `<figure class="bitcoin-real-figure" id="infografia-bloque-real">
  <div class="bitcoin-real-figure__heading"><span class="sectionEyebrow">ESQUEMA CON DATOS REALES · BITCOIN</span><h3>Una misma historia: árbol de Merkle, encabezado y minería</h3><p>Este bloque contiene dos transacciones auténticas, por lo que permite reconstruir su raíz de Merkle y estudiar los seis campos del encabezado sin inventar valores.</p></div>
  <a class="bitcoin-real-figure__image" href="/bitcoin-bloque-170.svg?v=fundamentos-20261111" target="_blank" rel="noopener noreferrer" title="Abrir infografía completa en otra pestaña"><img src="/bitcoin-bloque-170.svg?v=fundamentos-20261111" loading="lazy" decoding="async" width="1600" height="1020" alt="Infografía en español del bloque real 170: dos transacciones TX 0 y TX 1 producen la raíz de Merkle 7dac2c56…4c10ff. El encabezado muestra versión 1, hash del bloque 169, raíz de Merkle, fecha 12 de enero de 2009, nBits 0x1d00ffff y nonce 1.889.418.792. El doble SHA-256 del encabezado produce el hash válido 00000000d1145790…8dd4a2ee."/></a>
+ <div class="bitcoin-real-figure__companion">
+  <h4>Otra mirada al mismo bloque: estructura y nonce</h4>
+  <p>Una segunda infografía explica las partes de un bloque, los seis campos del encabezado y el proceso de minería. Se puede ampliar sin perder nitidez.</p>
+  <a class="bitcoin-real-figure__image" href="/bitcoin-bloque-nonce.svg?v=20261112" target="_blank" rel="noopener noreferrer" title="Ampliar infografía: bloque de Bitcoin y nonce">
+   <img src="/bitcoin-bloque-nonce.svg?v=20261112" loading="lazy" decoding="async" width="1040" height="1480" alt="Bloque de Bitcoin y nonce: estructura del bloque, seis campos del encabezado y cómo se busca un hash válido durante la minería."/>
+  </a>
+ </div>
  <details class="bitcoin-real-figure__data">
  <summary>Mostrar los seis campos completos del bloque 170</summary>
  <div class="bitcoin-real-figure__table-scroll"><table><thead><tr><th>Campo</th><th>Valor registrado</th><th>Para qué sirve</th></tr></thead><tbody>
@@ -312,32 +319,9 @@ function activateFlipCards(){
   const back=card.querySelector(".metric-card__back");
   if(!inner||!front||!back)return;
   let angle=0;
-  let hoverOn=false;
-  let hoverAnim=null;
-  const hoverTransform=on=>on?"translateY(-4px) scale(1.075)":"translateY(0px) scale(1)";
-  const setHover=on=>{
-   if(on===hoverOn)return;
-   const initial=hoverTransform(hoverOn);
-   hoverOn=on;
-   card.dataset.hovered=on?"true":"false";
-   if(hoverAnim){hoverAnim.cancel();hoverAnim=null}
-   if(card.animate){
-    hoverAnim=card.animate([{transform:initial},{transform:hoverTransform(on)}],{
-     duration:320,easing:"cubic-bezier(.16,.82,.25,1)",fill:"forwards"
-    });
-    hoverAnim.onfinish=()=>{
-     card.style.transform=hoverTransform(on);
-     hoverAnim.cancel();
-     hoverAnim=null;
-    };
-   }else{
-    card.style.transition="transform 320ms ease";
-    card.style.transform=hoverTransform(on);
-   }
-   card.style.zIndex=on?"12":"";
-  };
-  card.addEventListener("mouseenter",()=>setHover(true));
-  card.addEventListener("mouseleave",()=>setHover(false));
+  // No agrandar el contenedor: las transformaciones scale() rasterizan la tipografía
+  // y vuelven borrosas las tarjetas en Chrome y otras pantallas.
+  // Conservamos el giro de la tarjeta al hacer clic.
   card.addEventListener("click",()=>{
    if(card.dataset.animating==="true")return;
    const target=angle===0?180:0, flipped=target===180;
