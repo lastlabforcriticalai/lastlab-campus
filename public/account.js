@@ -70,24 +70,39 @@
     +'</section><section class="admin-section"><h3>Recuperación asistida</h3><p class="hint">Confirmá la identidad del alumno por fuera de esta web antes de entregarle el código. El código vence en 30 minutos y no sirve para cambiar cuentas docentes.</p>'
     +'<form id="resetIssueForm"><div class="row"><label for="resetStudent">Usuario del estudiante</label><input id="resetStudent" name="username" maxlength="30" required></div><button class="secondary" type="submit">Generar código de recuperación</button></form>'
     +'<div id="recoveryCreated" hidden><label for="resetCodeOutput">Código recién generado · copialo ahora</label><input id="resetCodeOutput" readonly><button type="button" class="secondary" id="copyReset">Copiar código</button></div>'
-    +'</section></div>';}
+    +'</section><section class="admin-section"><h3>Revisar tareas de alumnos</h3>'
+    +'<p class="hint">Consultá las propuestas escritas y los resultados de cuestionarios. Las notas personales del estudiante no se muestran.</p>'
+    +'<div class="row"><label for="reviewUsername">Usuario del alumno</label><input id="reviewUsername" maxlength="30" autocomplete="off"></div>'
+    +'<button class="secondary" id="reviewStudent">Consultar tarea y resultados</button><div id="studentWorkResult" class="table-wrap"></div>'
+    +'</section>'
+    +(user?.role==='admin'?'<section class="admin-section"><h3>Acceso de otros docentes</h3>'
+      +'<p class="hint">Otorgá acceso académico a una cuenta existente. No recibe permisos de Cloudflare ni puede gestionar a otros docentes.</p>'
+      +'<form id="teacherGrantForm"><div class="row"><label for="teacherUsername">Usuario registrado de la profesora</label><input id="teacherUsername" name="username" maxlength="30" required></div>'
+      +'<button class="primary" type="submit">Habilitar docente</button></form><button class="secondary" id="teacherList">Ver docentes y revocar</button>'
+      +'<div id="teacherGrantResults" class="table-wrap"></div></section>':'')
+    +'</div>';}
   function render(){
-    dialog.classList.toggle('admin-view',Boolean(user&&user.role==='admin'));
+    dialog.classList.toggle('admin-view',Boolean(user&&(user.role==='admin'||user.role==='teacher')));
     if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));slot.querySelectorAll('[data-recovery]').forEach(el=>el.addEventListener('click',()=>{recoveryMode=el.dataset.recovery;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite)invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});return;}
     slot.innerHTML=`<p>Sesión iniciada como <b>${esc(user.displayName||user.username)}</b>. Tu avance se guarda en Cloudflare D1 y puede recuperarse desde otros dispositivos.</p>
     <div class="controls"><button class="primary" id="logout">Cerrar sesión</button><button class="secondary" id="passwordChange">Cambiar contraseña</button></div>
-    <div class="notice" id="accountNotice" hidden></div><section id="hybridAccount"></section>${user.role==='admin'?adminMarkup():''}
+    <div class="notice" id="accountNotice" hidden></div><section id="hybridAccount"></section>${user.role==='admin'||user.role==='teacher'?adminMarkup():''}
     <p class="hint">Privacidad: conservamos el usuario, el avance y los resultados. Si registrás un correo, se usa para verificar la cuenta y recuperar el acceso. No solicitamos datos financieros reales.</p>`;
     $('#logout').onclick=logout;
     $('#passwordChange').onclick=changePasswordForm;
     loadHybridAccount();
-    if(user.role==='admin'){
+    if(user.role==='admin'||user.role==='teacher'){
       $('#adminLoad').onclick=loadAdmin;
       $('#invitesForm').onsubmit=issueInvitesFromPanel;
       $('#adminListInvites').onclick=loadInvitesFromPanel;
       $('#resetIssueForm').onsubmit=issueRecoveryFromPanel;
       $('#copyInvites').onclick=()=>copySecret($('#inviteCodes').value);
       $('#copyReset').onclick=()=>copySecret($('#resetCodeOutput').value);
+      $('#reviewStudent').onclick=()=>loadStudentWork($('#reviewUsername').value);
+      if(user.role==='admin'){
+        $('#teacherGrantForm').onsubmit=grantTeacher;
+        $('#teacherList').onclick=listTeachers;
+      }
     }
   }
   async function onSubmit(e){
@@ -254,9 +269,55 @@
       notice('Código de recuperación de '+data.username+' creado. Vence en 30 minutos; entregalo solo tras confirmar su identidad.');
     }catch(err){notice(err.message,true)}finally{button.disabled=false;}
   }
+  async function loadStudentWork(username){
+    const host=$('#studentWorkResult');if(!host)return;
+    if(!username.trim()){notice('Ingresá el usuario del estudiante.',true);return;}
+    host.textContent='Consultando entrega y evaluaciones…';
+    try{
+      const data=await request('/api/teacher/student-work?username='+encodeURIComponent(username.trim()));
+      const attempts=data.attempts||[];
+      const formatted=data.task?.trim()||'Todavía no hay propuesta escrita guardada.';
+      const date=data.updatedAt?new Date(data.updatedAt*1000).toLocaleString('es'):'Sin entrega registrada';
+      host.innerHTML='<h4>'+esc(data.student.displayName)+' ('+esc(data.student.username)+')</h4>'
+        +'<p class="hint">Última actualización: '+esc(date)+'. Unidades completadas: '+Number(data.completed?.length||0)+'/10.</p>'
+        +'<h4>Propuesta del taller</h4><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(formatted)+'</pre>'
+        +'<h4>Cuestionarios registrados</h4>'
+        +(attempts.length?'<table><thead><tr><th>Unidad</th><th>Resultado</th><th>Fecha</th></tr></thead><tbody>'
+          +attempts.map(a=>'<tr><td>'+Number(a.unit_number+1)+'</td><td>'+Number(a.score)+'/'+Number(a.total)+'</td><td>'+esc(new Date(a.created_at*1000).toLocaleString('es'))+'</td></tr>').join('')
+          +'</tbody></table>':'<p>No hay cuestionarios enviados.</p>');
+      notice('Trabajo académico consultado.');
+    }catch(err){host.textContent='';notice(err.message,true);}
+  }
+  async function grantTeacher(event){
+    event.preventDefault();const form=event.currentTarget;
+    const username=form.elements.namedItem('username').value.trim().toLowerCase();
+    if(!username)return;
+    try{await request('/api/admin/teachers',{method:'POST',body:JSON.stringify({username})});
+      form.reset();notice('Acceso docente habilitado para '+username+'.');await listTeachers();}
+    catch(err){notice(err.message,true);}
+  }
+  async function listTeachers(){
+    try{
+      const data=await request('/api/admin/teachers');
+      const host=$('#teacherGrantResults');if(!host)return;
+      host.innerHTML=(data.teachers||[]).length
+        ?'<table><thead><tr><th>Usuario</th><th>Nombre</th><th>Acción</th></tr></thead><tbody>'
+          +data.teachers.map(t=>'<tr><td>'+esc(t.username)+'</td><td>'+esc(t.display_name)+'</td><td><button class="secondary teacher-revoke" data-username="'+esc(t.username)+'">Revocar</button></td></tr>').join('')
+          +'</tbody></table>'
+        :'<p class="hint">Todavía no hay cuentas con permiso docente.</p>';
+      host.querySelectorAll('.teacher-revoke').forEach(button=>button.onclick=async()=>{
+        if(!confirm('¿Revocar el acceso docente de '+button.dataset.username+'?'))return;
+        try{await request('/api/admin/teachers',{method:'DELETE',body:JSON.stringify({username:button.dataset.username})});await listTeachers();notice('Acceso docente revocado.');}
+        catch(error){notice(error.message,true);}
+      });
+    }catch(err){notice(err.message,true);}
+  }
   async function loadAdmin(){
     try{notice('Consultando resultados…');const result=await request('/api/admin/students');exportRows=result.students;
-      $('#adminResult').innerHTML=`<table><thead><tr><th>Usuario</th><th>Nombre visible</th><th>Unidades</th><th>Intentos</th><th>Promedio</th></tr></thead><tbody>${exportRows.map(r=>`<tr><td>${esc(r.username)}</td><td>${esc(r.display_name)}</td><td>${r.completed}/10</td><td>${r.quiz_attempts}</td><td>${r.avg_quiz_percent??'—'}%</td></tr>`).join('')}</tbody></table>`;
+      $('#adminResult').innerHTML=`<table><thead><tr><th>Usuario</th><th>Nombre visible</th><th>Unidades</th><th>Intentos</th><th>Promedio</th><th>Tarea</th></tr></thead><tbody>${exportRows.map(r=>`<tr><td>${esc(r.username)}</td><td>${esc(r.display_name)}</td><td>${r.completed}/10</td><td>${r.quiz_attempts}</td><td>${r.avg_quiz_percent??'—'}%</td><td><button type="button" class="secondary student-review-link" data-username="${esc(r.username)}">Ver tarea</button></td></tr>`).join('')}</tbody></table>`;
+      $('#adminResult').querySelectorAll('.student-review-link').forEach(button=>button.onclick=()=>{
+        $('#reviewUsername').value=button.dataset.username;loadStudentWork(button.dataset.username);
+      });
       $('#adminCSV').disabled=false;$('#adminCSV').onclick=exportCSV;notice(`${exportRows.length} estudiantes encontrados.`);
     }catch(err){notice(err.message,true)}
   }
