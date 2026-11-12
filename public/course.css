@@ -634,3 +634,8 @@ html,body{max-width:100%;overflow-x:clip}
 }
 @media(prefers-reduced-motion:reduce){.bitcoin-real-figure__image{transition:none}.bitcoin-real-figure__image:hover{transform:none}}
 @media print{.reading .bitcoin-real-figure{width:100%;max-width:100%;box-shadow:none;break-inside:avoid}.bitcoin-real-figure__image:hover{transform:none}}
+
+/* Preguntas separadas visualmente del ejemplo, evitando la unión de títulos y texto. */
+.pedagogy-step__question{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 11px}
+.pedagogy-step__question span{flex:none;margin:0}
+.pedagogy-step__question strong{font-size:12px;line-height:1.7;color:#254e37;font-weight:650}
