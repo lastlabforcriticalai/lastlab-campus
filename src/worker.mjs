@@ -57,13 +57,27 @@ async function limit(env,req,action,username='',max=12,period=900) {
   const digest=await sha256(`${env.RATE_LIMIT_SALT}|${action}|${ip}|${username}`);
   return checkLimit(env,digest,max,period);
 }
+async function teacherGranted(env,userId){
+  // Compatible with existing D1: no teacher table is required until a grant is created.
+  try{
+    const grant=await env.DB.prepare('SELECT user_id FROM teacher_grants WHERE user_id=?').bind(userId).first();
+    return !!grant;
+  }catch(error){
+    if(/no such table: teacher_grants/i.test(String(error)))return false;
+    throw error;
+  }
+}
+const canTeach=u=>!!u&&(u.role==='admin'||u.role==='teacher');
 async function session(env,req) {
   const token=fromCookie(req); if(!/^[0-9a-f]{64}$/.test(token))return null;
   const digest=await sha256(token);
-  return env.DB.prepare(`SELECT u.id, u.username, u.display_name, u.role, s.token_hash, s.expires_at
+  const user=await env.DB.prepare(`SELECT u.id, u.username, u.display_name, u.role, s.token_hash, s.expires_at
     FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?`)
     .bind(digest,now()).first();
+  if(user&&user.role==='student'&&await teacherGranted(env,user.id))user.role='teacher';
+  return user;
 }
+
 async function createSession(env,userId) {
   const token=randomHex(32);
   await env.DB.prepare('INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)')
@@ -190,7 +204,7 @@ async function submitQuiz(env,req,u) {
     .bind(u.id,COURSE_ID,unit,score,keys.length,JSON.stringify(responses),now()).run();
   return reply({ok:true,score,total:keys.length,unit,verified:true});
 }
-async function adminStudents(env,u){if(u.role!=='admin')return fail('Acceso denegado.',403);
+async function adminStudents(env,u){if(!canTeach(u))return fail('Acceso denegado.',403);
   const rows=await env.DB.prepare(`SELECT u.id,u.username,u.display_name,u.created_at,
     COALESCE(json_array_length(json_extract(p.state_json,'$.done')),0) AS completed,
     (SELECT COUNT(*) FROM quiz_attempts a WHERE a.user_id=u.id AND a.course_id=?) AS quiz_attempts,
@@ -201,6 +215,59 @@ async function adminStudents(env,u){if(u.role!=='admin')return fail('Acceso dene
     WHERE u.role='student'
     ORDER BY u.created_at DESC LIMIT 500`).bind(COURSE_ID,COURSE_ID,COURSE_ID).all();
   return reply({ok:true,students:rows.results||[]});
+}
+// Teaching access is a *grant* on an existing student account. The original
+// users.role CHECK remains intact, avoiding a risky SQLite table rebuild.
+async function manageTeachers(env,req,u,method){
+  if(u.role!=='admin')return fail('Solo el administrador puede designar o revocar docentes.',403);
+  if(method==='GET'){
+    try{
+      const result=await env.DB.prepare(`SELECT u.username,u.display_name,t.created_at
+        FROM teacher_grants t JOIN users u ON u.id=t.user_id ORDER BY u.username`).all();
+      return reply({ok:true,teachers:result.results||[]});
+    }catch(error){
+      if(/no such table: teacher_grants/i.test(String(error)))return reply({ok:true,teachers:[]});
+      throw error;
+    }
+  }
+  if(method!=='POST'&&method!=='DELETE')return fail('Método no permitido.',405);
+  const payload=await body(req),username=String(payload.username||'').trim().toLowerCase();
+  if(!usernameOK(username))return fail('Ingresá un nombre de usuario válido.');
+  const candidate=await env.DB.prepare('SELECT id,role FROM users WHERE username=?').bind(username).first();
+  if(!candidate||candidate.role!=='student')return fail('La cuenta debe existir y no ser administradora.',404);
+  if(method==='POST'){
+    // Authorized admin operation; additive, idempotent, no data loss or migration of users.
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS teacher_grants(
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      granted_by TEXT NOT NULL REFERENCES users(id),
+      created_at INTEGER NOT NULL
+    )`).run();
+    await env.DB.prepare('INSERT OR IGNORE INTO teacher_grants(user_id,granted_by,created_at) VALUES(?,?,?)')
+      .bind(candidate.id,u.id,now()).run();
+    return reply({ok:true,username,role:'teacher'});
+  }
+  try{await env.DB.prepare('DELETE FROM teacher_grants WHERE user_id=?').bind(candidate.id).run();}
+  catch(error){if(!/no such table: teacher_grants/i.test(String(error)))throw error;}
+  return reply({ok:true,username,role:'student'});
+}
+async function teacherStudentWork(env,req,u,method){
+  if(!canTeach(u))return fail('Acceso docente requerido.',403);
+  if(method!=='GET')return fail('Método no permitido.',405);
+  const username=new URL(req.url).searchParams.get('username')?.trim().toLowerCase()||'';
+  if(!usernameOK(username))return fail('Indicá el usuario del estudiante.');
+  const student=await env.DB.prepare(`SELECT u.id,u.username,u.display_name,p.state_json,p.updated_at
+    FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.course_id=?
+    WHERE u.username=? AND u.role='student'`).bind(COURSE_ID,username).first();
+  if(!student||await teacherGranted(env,student.id))return fail('No se encontró un estudiante.',404);
+  const state=student.state_json?JSON.parse(student.state_json):{};
+  const attempts=await env.DB.prepare(`SELECT unit_number,score,total,created_at
+    FROM quiz_attempts WHERE user_id=? AND course_id=? ORDER BY created_at DESC LIMIT 100`)
+    .bind(student.id,COURSE_ID).all();
+  // Never expose personal notes, credentials, email tokens or raw security information.
+  return reply({ok:true,student:{username:student.username,displayName:student.display_name},
+    task:typeof state.task==='string'?state.task:'',
+    completed:Array.isArray(state.done)?state.done:[],
+    updatedAt:student.updated_at||null,attempts:attempts.results||[]});
 }
 async function changePassword(env,req,u){
   if(!await limit(env,req,'change-password',u.username,6,900))return fail('Demasiados intentos.',429);
@@ -246,7 +313,7 @@ async function resetPasswordWithTeacherCode(env,req){
 }
 async function studentInvitesAdmin(env,req,u,path,method){
   if(env.INVITES_ENABLED!=='true')return fail('El módulo de invitaciones aún no está habilitado. Falta aplicar su migración.',503);
-  if(u.role!=='admin')return fail('Acceso denegado.',403);
+  if(!canTeach(u))return fail('Acceso denegado.',403);
   if(path==='/api/admin/invites'&&method==='GET')return reply({ok:true,invites:await listInvites(env)});
   if(path==='/api/admin/invites'&&method==='POST'){
     if(!await limit(env,req,'admin-create-invites',u.id,12,3600))return fail('Límite de generación de invitaciones alcanzado.',429);
@@ -383,6 +450,8 @@ async function api(req,env){
   if(path==='/api/account/email'||path==='/api/account/email/resend'||path==='/api/account/backup-codes')
     return hybridAccount(env,req,u,path,method);
   if(path.startsWith('/api/admin/invites')||path==='/api/admin/recovery-code')return studentInvitesAdmin(env,req,u,path,method);
+  if(path==='/api/admin/teachers')return manageTeachers(env,req,u,method);
+  if(path==='/api/teacher/student-work')return teacherStudentWork(env,req,u,method);
   if(path==='/api/progress'&&method==='GET')return getProgress(env,u);
   if(path==='/api/progress'&&method==='PUT')return putProgress(env,req,u);
   if(path==='/api/quiz/submit'&&method==='POST')return submitQuiz(env,req,u);
