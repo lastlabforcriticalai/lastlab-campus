@@ -252,7 +252,7 @@ test('day one explains rules and every header field from first principles with r
  const body=six.paragraphs.join(' ');
  for(const part of ['regla de validación','doble gasto','BIP 34','BIP 9','VERSIÓN','HASH DEL BLOQUE ANTERIOR','RAÍZ DE MERKLE','TIEMPO','OBJETIVO COMPACTO','NONCE','0x00000001','0x1d00ffff','1.889.418.792'])assert.ok(body.includes(part),'Missing '+part);
  assert.match(body,/no.*cambia las reglas|no.*cambian las reglas|no.*decide.*reglas/i);
- assert.match(body,/no.*número de intentos|no.*cantidad de intentos/i);
+ assert.match(body,/NO significa que el minero haya realizado exactamente/);
  assert.match(body,/0 al 999/);
  assert.match(body,/dos veces.*SHA-256|SHA-256 dos veces/);
  assert.match(body,/software/);
