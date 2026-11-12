@@ -217,7 +217,7 @@ async function adminStudents(env,u){if(!canTeach(u))return fail('Acceso denegado
     ORDER BY u.created_at DESC LIMIT 500`).bind(COURSE_ID,COURSE_ID,COURSE_ID).all();
   let teacherIds=new Set();
   try{
-    const grants=await env.DB.prepare('SELECT user_id FROM teacher_grants').all();
+    const grants=await env.DB.prepare('SELECT user_id FROM teacher_grants').bind().all();
     teacherIds=new Set((grants.results||[]).map(g=>g.user_id));
   }catch(error){if(!/no such table: teacher_grants/i.test(String(error)))throw error;}
   return reply({ok:true,students:(rows.results||[]).filter(row=>!teacherIds.has(row.id))});
@@ -229,7 +229,7 @@ async function manageTeachers(env,req,u,method){
   if(method==='GET'){
     try{
       const result=await env.DB.prepare(`SELECT u.username,u.display_name,t.created_at
-        FROM teacher_grants t JOIN users u ON u.id=t.user_id ORDER BY u.username`).all();
+        FROM teacher_grants t JOIN users u ON u.id=t.user_id ORDER BY u.username`).bind().all();
       return reply({ok:true,teachers:result.results||[]});
     }catch(error){
       if(/no such table: teacher_grants/i.test(String(error)))return reply({ok:true,teachers:[]});
@@ -247,7 +247,7 @@ async function manageTeachers(env,req,u,method){
       user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
       granted_by TEXT NOT NULL REFERENCES users(id),
       created_at INTEGER NOT NULL
-    )`).run();
+    )`).bind().run();
     await env.DB.prepare('INSERT OR IGNORE INTO teacher_grants(user_id,granted_by,created_at) VALUES(?,?,?)')
       .bind(candidate.id,u.id,now()).run();
     return reply({ok:true,username,role:'teacher'});
