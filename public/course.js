@@ -281,6 +281,18 @@ function realBitcoinDiagram(){
  return `<figure class="bitcoin-real-figure" id="infografia-bloque-real">
  <div class="bitcoin-real-figure__heading"><span class="sectionEyebrow">ESQUEMA CON DATOS REALES · BITCOIN</span><h3>Una misma historia: árbol de Merkle, encabezado y minería</h3><p>Este bloque contiene dos transacciones auténticas, por lo que permite reconstruir su raíz de Merkle y estudiar los seis campos del encabezado sin inventar valores.</p></div>
  <a class="bitcoin-real-figure__image" href="/bitcoin-bloque-170.svg" target="_blank" rel="noopener noreferrer" title="Abrir infografía completa en otra pestaña"><img src="/bitcoin-bloque-170.svg" loading="lazy" decoding="async" width="1600" height="1020" alt="Infografía en español del bloque real 170: dos transacciones TX 0 y TX 1 producen la raíz de Merkle 7dac2c56…4c10ff. El encabezado muestra versión 1, hash del bloque 169, raíz de Merkle, fecha 12 de enero de 2009, nBits 0x1d00ffff y nonce 1.889.418.792. El doble SHA-256 del encabezado produce el hash válido 00000000d1145790…8dd4a2ee."/></a>
+ <details class="bitcoin-real-figure__data">
+ <summary>Mostrar los seis campos completos del bloque 170</summary>
+ <div class="bitcoin-real-figure__table-scroll"><table><thead><tr><th>Campo</th><th>Valor registrado</th><th>Para qué sirve</th></tr></thead><tbody>
+ <tr><th>Versión</th><td><code>1 (0x00000001)</code></td><td>Versión y señalización de reglas del encabezado.</td></tr>
+ <tr><th>Hash del bloque anterior</th><td><code>000000002a22cfee1f2c846adbd12b3e183d4f97683f85dad08a79780a84bd55</code></td><td>Enlaza este bloque con el n.º 169.</td></tr>
+ <tr><th>Raíz de Merkle</th><td><code>7dac2c5666815c17a3b36427de37bb9d2e2c5ccec3f8633eb91a4205cb4c10ff</code></td><td>Resume las dos transacciones del bloque.</td></tr>
+ <tr><th>Tiempo</th><td><code>1231731025</code><small>12/01/2009, 03:30:25 UTC</small></td><td>Marca de tiempo declarada por el productor del bloque, en segundos Unix.</td></tr>
+ <tr><th>Objetivo compacto (nBits)</th><td><code>0x1d00ffff</code></td><td>Codifica el umbral máximo permitido para el hash, no el hash mismo.</td></tr>
+ <tr><th>Nonce</th><td><code>1889418792 (0x709e3e28)</code></td><td>Número de 32 bits usado en el encabezado que produjo un hash válido.</td></tr>
+ </tbody></table></div>
+ <p><b>Resultado de la minería:</b> hash del bloque <code>00000000d1145790a8694403d4063f323d499e655c83426834d4ce2f8dd4a2ee</code>. Se calcula aplicando SHA-256 dos veces a los 80 bytes del encabezado; el hash resultante debe ser numéricamente menor o igual al objetivo codificado en nBits. Los exploradores muestran los hashes con un orden de bytes distinto del empleado al serializar el encabezado.</p>
+ </details>
  <figcaption><span>Los hashes se muestran abreviados para facilitar la lectura; el cálculo utiliza los 32 bytes completos de cada valor y el orden interno de Bitcoin.</span><span class="bitcoin-real-figure__links"><a href="/bitcoin-bloque-170.svg" target="_blank" rel="noopener noreferrer">Ampliar infografía</a><a href="${url}" target="_blank" rel="noopener noreferrer">Ver bloque 170 en el explorador</a></span></figcaption>
  </figure>`;
 }
