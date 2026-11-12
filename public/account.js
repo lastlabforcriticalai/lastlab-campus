@@ -86,11 +86,12 @@
     if(!user){slot.innerHTML=formMarkup();slot.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{loginTab=el.dataset.tab;render()}));slot.querySelectorAll('[data-recovery]').forEach(el=>el.addEventListener('click',()=>{recoveryMode=el.dataset.recovery;render()}));$('#accountForm').addEventListener('submit',onSubmit);$('#accountForm').addEventListener('input',()=>notice(''));const invite=$('#inviteInput');if(invite)invite.addEventListener('input',()=>{$('#inviteLength').textContent='Longitud del código: '+invite.value.length+' caracteres';});return;}
     slot.innerHTML=`<p>Sesión iniciada como <b>${esc(user.displayName||user.username)}</b>. Tu avance se guarda en Cloudflare D1 y puede recuperarse desde otros dispositivos.</p>
     <div class="controls"><button class="primary" id="logout">Cerrar sesión</button><button class="secondary" id="passwordChange">Cambiar contraseña</button></div>
-    <div class="notice" id="accountNotice" hidden></div><section id="hybridAccount"></section>${user.role==='admin'||user.role==='teacher'?adminMarkup():''}
+    <div class="notice" id="accountNotice" hidden></div><section id="hybridAccount"></section><section id="academicFeedback"></section>${user.role==='admin'||user.role==='teacher'?adminMarkup():''}
     <p class="hint">Privacidad: conservamos el usuario, el avance y los resultados. Si registrás un correo, se usa para verificar la cuenta y recuperar el acceso. No solicitamos datos financieros reales.</p>`;
     $('#logout').onclick=logout;
     $('#passwordChange').onclick=changePasswordForm;
     loadHybridAccount();
+    loadAcademicFeedback();
     if(user.role==='admin'||user.role==='teacher'){
       $('#adminLoad').onclick=loadAdmin;
       $('#invitesForm').onsubmit=issueInvitesFromPanel;
@@ -176,6 +177,19 @@
     slot.innerHTML=`<p>Para cambiar tu contraseña, confirmá primero la actual.</p><form id="passwordForm"><div class="row"><label for="oldPass">Contraseña actual</label><input id="oldPass" name="oldPassword" type="password" autocomplete="current-password" required></div><div class="row"><label for="newPass">Contraseña nueva (12 caracteres como mínimo)</label><input id="newPass" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></div><button class="primary">Cambiar contraseña</button><button type="button" class="secondary" id="back">Volver</button></form><div class="notice" id="accountNotice" hidden></div>`;
     $('#back').onclick=render;
     $('#passwordForm').onsubmit=async e=>{e.preventDefault();let b=Object.fromEntries(new FormData(e.currentTarget));try{await request('/api/auth/change-password',{method:'POST',body:JSON.stringify(b)});user=null;bridge?.applyRemote({});refreshUI();render();notice('Contraseña actualizada. Iniciá sesión nuevamente.')}catch(err){notice(err.message,true)}};
+  }
+  async function loadAcademicFeedback(){
+    const host=$('#academicFeedback');if(!host)return;
+    try{
+      const data=await request('/api/progress');
+      if(!host.isConnected)return;
+      const fb=data.teacherFeedback;
+      host.innerHTML=fb?.text
+        ?'<div class="admin-section"><h3>Devolución de tu docente</h3>'
+          +'<p class="hint">Actualizada: '+esc(new Date(fb.updatedAt*1000).toLocaleString('es'))+'</p>'
+          +'<pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(fb.text)+'</pre></div>'
+        :'';
+    }catch(error){console.warn('Devolución docente',error.message);}
   }
   async function loadHybridAccount(){
     const host=$('#hybridAccount');if(!host)return;
@@ -284,7 +298,18 @@
         +'<h4>Cuestionarios registrados</h4>'
         +(attempts.length?'<table><thead><tr><th>Unidad</th><th>Resultado</th><th>Fecha</th></tr></thead><tbody>'
           +attempts.map(a=>'<tr><td>'+Number(a.unit_number+1)+'</td><td>'+Number(a.score)+'/'+Number(a.total)+'</td><td>'+esc(new Date(a.created_at*1000).toLocaleString('es'))+'</td></tr>').join('')
-          +'</tbody></table>':'<p>No hay cuestionarios enviados.</p>');
+          +'</tbody></table>':'<p>No hay cuestionarios enviados.</p>')
+        +'<h4>Devolución docente</h4>'
+        +'<form id="studentFeedbackForm"><textarea name="feedback" maxlength="3000" rows="5" placeholder="Escribí una devolución concreta y fundamentada para el estudiante." required>'+esc(data.feedback?.text||'')+'</textarea>'
+        +'<button type="submit" class="primary">Guardar devolución</button></form>';
+      $('#studentFeedbackForm').onsubmit=async event=>{
+        event.preventDefault();
+        const feedback=event.currentTarget.elements.namedItem('feedback').value;
+        try{
+          await request('/api/teacher/student-work',{method:'POST',body:JSON.stringify({username:data.student.username,feedback})});
+          notice('Devolución guardada. El estudiante la verá en Mi cuenta.');
+        }catch(error){notice(error.message,true);}
+      };
       notice('Trabajo académico consultado.');
     }catch(err){host.textContent='';notice(err.message,true);}
   }
