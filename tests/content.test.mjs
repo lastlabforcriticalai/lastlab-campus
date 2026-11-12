@@ -222,7 +222,7 @@ test('Bitcoin 170 educational tree and all six real header fields are visible an
  assert.ok(merkleIndex>=0&&merkleIndex<nonceIndex,'Explain Merkle first');
  assert.ok(merkle.paragraphs.length>=5);
  const copy=merkle.paragraphs.join(' ');
- for(const piece of ['b1fea524','f4184fc5','7dac2c5666815c17a3b36427de37bb9d2e2c5ccec3f8633eb91a4205cb4c10ff','1889418792','0x709e3e28'])assert.ok(copy.includes(piece),piece);
+ for(const piece of ['b1fea524','f4184fc5','7dac2c5666815c17a3b36427de37bb9d2e2c5ccec3f8633eb91a4205cb4c10ff','1.889.418.792','0x709e3e28'])assert.ok(copy.includes(piece),piece);
  assert.match(copy,/orden de bytes/);
  assert.match(ui,/function realBitcoinDiagram\(\)/);
  assert.match(ui,/src="\/bitcoin-bloque-170\.svg"/);
