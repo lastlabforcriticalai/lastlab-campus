@@ -307,6 +307,14 @@ test('roles docentes separados: seguimiento, tareas, invitaciones y recuperacion
  assert.equal(r.status,200);assert.equal(r.data.task,'Propuesta redactada por la alumna.');
  assert.equal(r.data.attempts.length,1);
  assert.ok(!JSON.stringify(r.data).includes('Notas personales privadas.'),'No mostrar notas privadas');
+ r=await call(env,'/api/teacher/student-work',{method:'POST',sessionCookie:teacherSession,body:{username:'alumna',feedback:'Buen trabajo. Precisar mejor las responsabilidades de cada cooperativa.'}});
+ assert.equal(r.status,200,'La profesora puede guardar una devolucion');
+ r=await call(env,'/api/progress',{sessionCookie:studentSession});
+ assert.equal(r.status,200);assert.match(r.data.teacherFeedback.text,/Buen trabajo/);
+ r=await call(env,'/api/teacher/student-work?username=alumna',{sessionCookie:teacherSession});
+ assert.match(r.data.feedback.text,/Buen trabajo/);
+ r=await call(env,'/api/teacher/student-work',{method:'POST',sessionCookie:studentSession,body:{username:'alumna',feedback:'Autocorreccion no autorizada'}});
+ assert.equal(r.status,403,'Los alumnos no pueden publicar devoluciones docentes');
  r=await call(env,'/api/teacher/student-work?username=alumna',{sessionCookie:studentSession});
  assert.equal(r.status,403);
  r=await call(env,'/api/admin/invites',{method:'POST',sessionCookie:teacherSession,body:{count:1,label:'Nueva alumna'}});
