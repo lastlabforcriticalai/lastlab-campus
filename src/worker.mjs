@@ -159,6 +159,7 @@ async function login(env,req) {
   // No revelar si el nombre o correo existe a través del mensaje o el tiempo de PBKDF2.
   const salt=u?.password_salt||'0'.repeat(32), hash=await derivePassword(b.password,salt,u?.password_iterations||ITERATIONS);
   if(!u||!constantTimeEqual(u.password_hash,hash))return fail('Credenciales incorrectas.',401);
+  if(u.role==='student'&&await teacherGranted(env,u.id))u.role='teacher';
   return reply({ok:true,user:{id:u.id,username:u.username,displayName:u.display_name,role:u.role}},200,
     {'Set-Cookie':await createSession(env,u.id)});
 }
@@ -214,7 +215,12 @@ async function adminStudents(env,u){if(!canTeach(u))return fail('Acceso denegado
     FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.course_id=?
     WHERE u.role='student'
     ORDER BY u.created_at DESC LIMIT 500`).bind(COURSE_ID,COURSE_ID,COURSE_ID).all();
-  return reply({ok:true,students:rows.results||[]});
+  let teacherIds=new Set();
+  try{
+    const grants=await env.DB.prepare('SELECT user_id FROM teacher_grants').all();
+    teacherIds=new Set((grants.results||[]).map(g=>g.user_id));
+  }catch(error){if(!/no such table: teacher_grants/i.test(String(error)))throw error;}
+  return reply({ok:true,students:(rows.results||[]).filter(row=>!teacherIds.has(row.id))});
 }
 // Teaching access is a *grant* on an existing student account. The original
 // users.role CHECK remains intact, avoiding a risky SQLite table rebuild.
@@ -326,7 +332,13 @@ async function studentInvitesAdmin(env,req,u,path,method){
   }
   if(path==='/api/admin/recovery-code'&&method==='POST'){
     if(!await limit(env,req,'admin-recovery',u.id,10,3600))return fail('Límite de códigos de recuperación alcanzado.',429);
-    const b=await body(req),result=await issueRecovery(env,u.id,b.username);
+    const b=await body(req);
+    if(u.role==='teacher'){
+      const target=await env.DB.prepare('SELECT id FROM users WHERE username=? AND role=\'student\'')
+        .bind(String(b.username||'').trim().toLowerCase()).first();
+      if(!target||await teacherGranted(env,target.id))return fail('Sólo se pueden recuperar cuentas de estudiantes.',403);
+    }
+    const result=await issueRecovery(env,u.id,b.username);
     return result.error?fail(result.error,404):reply({ok:true,...result},201);
   }
   return fail('Ruta inexistente.',404);
