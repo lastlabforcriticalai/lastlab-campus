@@ -51,7 +51,7 @@ test('Colombia frontend displays updated charts and pesos, not Ecuador-based sim
  assert.match(ui,/Ingreso mensual estimado \(COP\)/);
  assert.match(ui,/Pagos mensuales de deudas \(COP\)/);
  assert.doesNotMatch(ui,/cooperativa ecuatoriana|Ingreso mensual estimado \(USD\)/);
- assert.match(html,/clase2-colombia-20261111/);
+ assert.match(html,/clases-ampliadas-20261111/);
 });
 
 
@@ -92,8 +92,8 @@ test('responsive dashboard styling retains table readability and cards work inde
  const accountCss=readFileSync(new URL('../public/account.css',import.meta.url),'utf8');
  for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
  assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
- assert.ok(html.includes('/course.css?v=clase2-colombia-20261111'));
- assert.ok(html.includes('/course.js?v=clase2-colombia-20261111'));
+ assert.ok(html.includes('/course.css?v=clases-ampliadas-20261111'));
+ assert.ok(html.includes('/course.js?v=clases-ampliadas-20261111'));
 });
 
 
@@ -112,7 +112,7 @@ test('browser animations use explicit keyframes to flip and grow despite CSS ani
  assert.match(ui,/target===180/);
  assert.match(ui,/Clic para girar/);
  assert.match(ui,/Clic para volver/);
- assert.match(html,/clase2-colombia-20261111/);
+ assert.match(html,/clases-ampliadas-20261111/);
 });
 
 
@@ -127,9 +127,9 @@ test('second day follows verified institutional schedule and has three dedicated
  const fraud=blocks.fraudWorkshopPanel();
  const final=blocks.finalDayTwoPanel();
  assert.ok(agenda.includes('25 NOV')&&agenda.includes('13:00–15:00'));
- assert.ok(agenda.includes('96,3 %')&&agenda.includes('35,5 %'));
+ assert.ok(agenda.includes('96,5 %')&&agenda.includes('36,1 %')&&agenda.includes('2025'));
  assert.ok(agenda.includes('47'));
- assert.ok(agenda.includes('bancadelasoportunidades.gov.co'));
+ assert.ok(agenda.includes('superfinanciera.gov.co'));
  assert.equal((agenda.match(/day-two-agenda__row/g)||[]).length,5);
  assert.ok(fraud.includes('fraudThreshold')&&fraud.includes('fraudFP')&&fraud.includes('fraudFN'));
  assert.ok(fraud.includes('20 operaciones'));
@@ -148,7 +148,7 @@ test('second day content contains current Colombian source-based research and ke
  assert.equal(day2.reduce((total,unit)=>total+unit.minutes,0),120);
  const body=day2.flatMap(unit=>unit.sections.flatMap(x=>x.paragraphs)).join(' ');
  assert.match(body,/47 entidades/);
- assert.match(body,/96,3 %/);
+ assert.match(body,/96,5 %/);
  assert.match(body,/falso positivo/);
  assert.match(body,/revisión humana/);
  assert.match(body,/Colombia/);
@@ -157,4 +157,59 @@ test('second day content contains current Colombian source-based research and ke
  'https://www.superfinanciera.gov.co/publicaciones/10116314/historico-publicaciones/',
  'https://sedeelectronica.sic.gov.co/publicaciones/boletin-juridico/concepto/regimen-de-tratamiento-de-datos-personales-debe-aplicarse-al-margen-de-los-procedimientos-metodologias-o'
  ])assert.ok(course.references.some(r=>r.url===url));
+});
+
+
+test('all 95 teaching sections include unique accessible starting explanations without replacing advanced paragraphs',()=>{
+ const all=course.units.flatMap((unit,index)=>unit.sections.map(s=>({unit:index+1,...s})));
+ assert.equal(all.length,95);
+ assert.equal(all.filter(s=>s.entrada?.length>90 && s.comprobar?.length>18).length,all.length);
+ assert.ok(new Set(all.map(s=>s.entrada)).size===all.length,'Each lesson should have its own example');
+ assert.ok(new Set(all.map(s=>s.comprobar)).size===all.length,'Each topic should have its own check question');
+ assert.ok(all.every(s=>s.paragraphs.length>0&&s.paragraphs.every(p=>p.length>50)));
+ assert.match(ui,/class="pedagogy-step"/);
+ assert.match(ui,/PARA EMPEZAR · UN EJEMPLO/);
+ assert.match(ui,/PARA PENSAR/);
+ const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
+ assert.match(css,/\.reading \.pedagogy-step/);
+});
+
+test('nonce is taught before proof-of-work and has a functioning toy search with explicit Bitcoin distinctions',()=>{
+ const sections=course.units[2].sections;
+ const nonceIndex=sections.findIndex(s=>s.title.includes('Qué es el nonce'));
+ const powIndex=sections.findIndex(s=>s.title.startsWith('Proof of Work'));
+ assert.ok(nonceIndex>=0&&nonceIndex<powIndex);
+ const body=sections[nonceIndex].paragraphs.join(' ');
+ assert.match(body,/32 bits/);
+ assert.match(body,/80 bytes/);
+ assert.match(body,/4\.294\.967\.295/);
+ assert.match(body,/SHA-256/);
+ assert.match(body,/extranonce/);
+ assert.match(body,/objetivo/);
+ assert.match(body,/no comprueba/);
+ assert.ok(sections[nonceIndex].paragraphs.length>=6);
+ assert.match(ui,/function noncePlayground/);
+ assert.match(ui,/function renderNonceAttempt/);
+ assert.match(ui,/function bindNonceLab/);
+ assert.match(ui,/crypto\.subtle\.digest/);
+ assert.match(ui,/nonceSearch/);
+ assert.match(ui,/5000/);
+ assert.match(ui,/bindNonceLab\(\);/);
+ assert.ok(course.references.some(r=>r.url.includes('bitcoindevelopers.org/docs/reference/block-chain-ref')));
+});
+
+test('both jornadas have date and time in Argentina and Colombia, and all five day-two units have rich visual content',()=>{
+ assert.match(ui,/Jueves 12 de noviembre de 2026/);
+ assert.match(ui,/19:30–21:30/);
+ assert.match(ui,/17:30–19:30/);
+ assert.match(ui,/Miércoles 25 de noviembre de 2026/);
+ assert.match(ui,/13:00–15:00/);
+ assert.match(ui,/11:00–13:00/);
+ const functions=['aiModesPanel','creditDistributionPanel','auditWorkbenchPanel','infrastructureAtlasPanel','finalDayTwoPanel'];
+ for(const fn of functions)assert.match(ui,new RegExp('function '+fn+'\\('));
+ for(const ref of ['data-ai-mode','creditThreshold','auditCount','atlas-grid','day-two-deliverable'])assert.ok(ui.includes(ref));
+ assert.match(ui,/bindDay2Studios\(\);/);
+ assert.match(ui,/function bindDay2Studios/);
+ const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
+ for(const item of ['.daySchedule','.unitSchedule','.studio-tabs','.credit-comparison','.audit-grid','.atlas-card','.nonce-lab'])assert.ok(css.includes(item));
 });
