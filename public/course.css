@@ -167,7 +167,7 @@ html,body{max-width:100%;overflow-x:clip}
 .metric-card__back-action{margin-top:auto;font-size:10px;font-weight:700;color:#b9e5c3;padding-top:7px}
 .metric-card__back-action span{font-size:15px}
 @media(hover:hover) and (pointer:fine){
- .metric-card:hover{transform:translateY(-6px)}
+ .metric-card:hover{transform:none}
  .metric-card:hover .metric-card__front{border-color:#9bcaab;box-shadow:0 16px 38px rgba(28,82,45,.13)}
  .metric-card:hover .metric-card__symbol{transform:rotate(45deg)}
  .metric-card:hover .metric-card__action span{transform:translate(2px,-2px)}
@@ -175,7 +175,7 @@ html,body{max-width:100%;overflow-x:clip}
  .market-history-table tbody tr:hover .market-year{color:#15653a}
 }
 .metric-card:focus-visible{outline:3px solid #218958;outline-offset:4px;border-radius:18px}
-.metric-card:active{transform:scale(.99)}
+.metric-card:active{transform:none}
 .market-bottom{display:grid;gap:12px}
 .market-insight{display:flex;gap:14px;align-items:flex-start;border-radius:14px;padding:15px 17px;background:#eaf2e8;border:1px solid #d1e2d2}
 .market-insight__symbol{flex:none;width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:#d7e9d7;color:#286b42;font-size:20px}
@@ -639,3 +639,9 @@ html,body{max-width:100%;overflow-x:clip}
 .pedagogy-step__question{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 11px}
 .pedagogy-step__question span{flex:none;margin:0}
 .pedagogy-step__question strong{font-size:12px;line-height:1.7;color:#254e37;font-weight:650}
+
+
+/* Segundo recurso visual del bloque 170. El SVG puede ampliarse sin pérdida. */
+.bitcoin-real-figure__companion{margin:22px 0 6px}
+.bitcoin-real-figure__companion h4{margin:0 0 6px;font-size:19px;color:#154f3b}
+.bitcoin-real-figure__companion p{margin:0 0 14px;color:#526a5d;font-size:14px;line-height:1.6}
