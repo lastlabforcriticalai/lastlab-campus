@@ -182,7 +182,16 @@ function cleanProgress(input) {
   const json=JSON.stringify(safe);if(new Blob([json]).size>MAX_STATE_BYTES)throw Object.assign(new Error('Progreso demasiado grande'),{status:413});
   return safe;
 }
-async function getProgress(env,u){const r=await env.DB.prepare('SELECT state_json,updated_at FROM progress WHERE user_id=? AND course_id=?').bind(u.id,COURSE_ID).first();return reply({ok:true,state:r?JSON.parse(r.state_json):null,updatedAt:r?.updated_at||null});}
+async function getProgress(env,u){
+  const r=await env.DB.prepare('SELECT state_json,updated_at FROM progress WHERE user_id=? AND course_id=?').bind(u.id,COURSE_ID).first();
+  let teacherFeedback=null;
+  try{
+    const review=await env.DB.prepare('SELECT feedback,updated_at FROM academic_reviews WHERE student_id=? AND course_id=?')
+      .bind(u.id,COURSE_ID).first();
+    if(review)teacherFeedback={text:review.feedback,updatedAt:review.updated_at};
+  }catch(error){if(!/no such table: academic_reviews/i.test(String(error)))throw error;}
+  return reply({ok:true,state:r?JSON.parse(r.state_json):null,updatedAt:r?.updated_at||null,teacherFeedback});
+}
 async function putProgress(env,req,u) {
   const b=await body(req),state=cleanProgress(b.state);
   await env.DB.prepare(`INSERT INTO progress(user_id,course_id,state_json,updated_at) VALUES(?,?,?,?)
@@ -258,22 +267,47 @@ async function manageTeachers(env,req,u,method){
 }
 async function teacherStudentWork(env,req,u,method){
   if(!canTeach(u))return fail('Acceso docente requerido.',403);
-  if(method!=='GET')return fail('Método no permitido.',405);
-  const username=new URL(req.url).searchParams.get('username')?.trim().toLowerCase()||'';
+  if(method!=='GET'&&method!=='POST')return fail('Método no permitido.',405);
+  const payload=method==='POST'?await body(req):{};
+  const username=String(method==='POST'?payload.username:new URL(req.url).searchParams.get('username')||'').trim().toLowerCase();
   if(!usernameOK(username))return fail('Indicá el usuario del estudiante.');
   const student=await env.DB.prepare(`SELECT u.id,u.username,u.display_name,p.state_json,p.updated_at
     FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.course_id=?
     WHERE u.username=? AND u.role='student'`).bind(COURSE_ID,username).first();
   if(!student||await teacherGranted(env,student.id))return fail('No se encontró un estudiante.',404);
+  if(method==='POST'){
+    const feedback=payload.feedback;
+    if(typeof feedback!=='string'||feedback.trim().length<1||feedback.length>3000)
+      return fail('La devolución debe tener entre 1 y 3000 caracteres.');
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academic_reviews(
+      student_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id TEXT NOT NULL,
+      feedback TEXT NOT NULL,
+      reviewed_by TEXT NOT NULL REFERENCES users(id),
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY(student_id,course_id)
+    )`).bind().run();
+    await env.DB.prepare(`INSERT INTO academic_reviews(student_id,course_id,feedback,reviewed_by,updated_at)
+      VALUES(?,?,?,?,?) ON CONFLICT(student_id,course_id) DO UPDATE SET
+      feedback=excluded.feedback,reviewed_by=excluded.reviewed_by,updated_at=excluded.updated_at`)
+      .bind(student.id,COURSE_ID,feedback.trim(),u.id,now()).run();
+    return reply({ok:true,message:'Devolución guardada para el estudiante.'});
+  }
   const state=student.state_json?JSON.parse(student.state_json):{};
   const attempts=await env.DB.prepare(`SELECT unit_number,score,total,created_at
     FROM quiz_attempts WHERE user_id=? AND course_id=? ORDER BY created_at DESC LIMIT 100`)
     .bind(student.id,COURSE_ID).all();
+  let feedback=null;
+  try{
+    const review=await env.DB.prepare('SELECT feedback,updated_at FROM academic_reviews WHERE student_id=? AND course_id=?')
+      .bind(student.id,COURSE_ID).first();
+    feedback=review?{text:review.feedback,updatedAt:review.updated_at}:null;
+  }catch(error){if(!/no such table: academic_reviews/i.test(String(error)))throw error;}
   // Never expose personal notes, credentials, email tokens or raw security information.
   return reply({ok:true,student:{username:student.username,displayName:student.display_name},
     task:typeof state.task==='string'?state.task:'',
     completed:Array.isArray(state.done)?state.done:[],
-    updatedAt:student.updated_at||null,attempts:attempts.results||[]});
+    updatedAt:student.updated_at||null,attempts:attempts.results||[],feedback});
 }
 async function changePassword(env,req,u){
   if(!await limit(env,req,'change-password',u.username,6,900))return fail('Demasiados intentos.',429);
