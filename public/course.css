@@ -525,3 +525,50 @@ html,body{max-width:100%;overflow-x:clip}
 .atlas-question strong{white-space:nowrap;color:#1a5036}
 @media(max-width:800px){.atlas-grid,.audit-grid,.credit-comparison{grid-template-columns:1fr}.studio-scenario{grid-template-columns:1fr}}
 @media(max-width:560px){.studio-tabs{gap:4px}.studio-tab{padding:12px 6px;font-size:11px;gap:5px}.studio-flow{grid-template-columns:1fr;gap:7px}.studio-flow__node{min-height:70px}.studio-flow__arrow{transform:rotate(90deg)}.studio-board__heading,.credit-board__heading,.audit-board__heading{display:block}.credit-board__seal,.audit-board__counter{display:inline-block;margin:0 0 14px}.atlas-question{display:block}.atlas-question strong{display:block;margin-bottom:5px}}
+
+
+/* Teaching scaffolding: plain-language examples appear before, not instead of, theory. */
+.reading .pedagogy-step{max-width:790px;margin:15px 0 27px;padding:19px 22px 16px;background:linear-gradient(135deg,#f0f7ef,#f8fbf7);border:1px solid #cadfce;border-left:4px solid #539c69;border-radius:0 14px 14px 0;box-shadow:0 6px 18px rgba(23,65,37,.035)}
+.pedagogy-step__label{font-size:10px;font-family:'DM Sans',sans-serif;letter-spacing:.13em;font-weight:850;color:#3d8355;display:block;margin-bottom:9px}
+.reading .pedagogy-step>p{font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.85;color:#2c513b;margin:0 0 14px}
+.pedagogy-step__question{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:650;color:#3d664a;border-top:1px solid #d6e6d8;padding-top:12px;line-height:1.65}
+.pedagogy-step__question span{font-size:9px;letter-spacing:.1em;font-weight:850;margin-right:9px;color:#4a9361}
+.nonce-lab{border:1px solid #cddfd2;padding:clamp(21px,3vw,34px);border-radius:20px;background:linear-gradient(145deg,#f8fbf5,#edf5ef);box-shadow:0 18px 38px rgba(28,65,39,.07)}
+.nonce-lab h2{font:600 clamp(24px,2.8vw,33px)/1.2 'Source Serif 4',Georgia,serif;letter-spacing:-.03em;color:#19432d;margin:9px 0 13px}
+.nonce-lab__head{display:flex;align-items:flex-start;justify-content:space-between;gap:22px}
+.nonce-lab__head p{font-size:13px;line-height:1.75;max-width:625px;color:#4e6e5a}
+.nonce-lab__flag{flex:none;background:#16462f;border:1px solid #346849;color:#c2efd0;border-radius:13px;padding:19px 18px;font-size:18px;letter-spacing:.1em;font-family:monospace;text-align:center;font-weight:800}
+.nonce-lab__flag small{font:600 10px 'DM Sans',sans-serif;letter-spacing:0;color:#e0f3e4}
+.nonce-lab__steps{display:grid;grid-template-columns:minmax(0,1fr) 19px minmax(0,1fr) 19px minmax(0,1fr);gap:10px;align-items:center;margin:21px 0 25px}
+.nonce-lab__steps>div{background:white;border:1px solid #d2e2d5;padding:16px 15px;border-radius:13px;min-height:116px}
+.nonce-lab__steps>div small{display:block;color:#449060;font-size:10px;font-weight:850;letter-spacing:.11em;margin-bottom:8px}
+.nonce-lab__steps>div b{color:#1f5036;font-size:13px}
+.nonce-lab__steps>div p{font-size:11px;line-height:1.6;color:#6a8571;margin:7px 0}
+.nonce-lab__steps>span{font-size:24px;color:#4f926a;text-align:center}
+.nonce-lab__experiment{background:#fff;border:1px solid #d2e2d5;border-radius:15px;padding:20px}
+.nonce-lab__experiment-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}
+.nonce-lab__experiment-head>div span{font-size:10px;letter-spacing:.11em;color:#4c9864;font-weight:850;display:block}
+.nonce-lab__experiment-head>div strong{display:block;font-size:17px;color:#19462f;margin-top:6px}
+.nonce-lab__odds{font-size:12px;color:#4e8560;font-weight:800;border:1px solid #d1e4d5;border-radius:100px;padding:8px 12px;white-space:nowrap}
+.nonce-lab__experiment>p{font-size:12px;line-height:1.8;color:#516a57}
+.nonce-lab__result{background:#eff6f0;border-radius:12px;margin-top:15px;border:1px solid #d2e4d4;color:#395b43;padding:15px;font-size:12px;line-height:1.7}
+.nonce-lab__table{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:9px}
+.nonce-lab__row{display:flex;flex-direction:column;gap:4px;background:white;border:1px solid #d6e6d9;border-radius:9px;padding:11px}
+.nonce-lab__row span{color:#37614a;font-weight:700}
+.nonce-lab__row code{font-size:14px;color:#17462e}
+.nonce-lab__row small{font-size:10px;color:#6a8270}
+.nonce-lab__success{border-top:1px solid #b9d9c2;margin-top:12px;padding-top:13px;display:flex;flex-direction:column;gap:6px}
+.nonce-lab__success strong{color:#257347;font-size:14px}
+.nonce-lab__success span{color:#2c6342;font-weight:800}
+.nonce-lab__success code{background:#fff;border-radius:8px;border:1px solid #b7dbc1;padding:10px;font-size:11px;overflow-wrap:anywhere;word-break:break-all}
+.nonce-lab__success p{font-size:11px;color:#526f5d;margin:4px 0}
+@media(max-width:680px){
+ .reading .pedagogy-step{padding:16px 17px}
+ .nonce-lab__head{display:block}
+ .nonce-lab__flag{display:inline-block;margin-bottom:12px}
+ .nonce-lab__steps{grid-template-columns:1fr;gap:6px}
+ .nonce-lab__steps>div{min-height:auto}
+ .nonce-lab__steps>span{transform:rotate(90deg)}
+ .nonce-lab__experiment-head{align-items:flex-start;flex-direction:column}
+}
+@media print{.nonce-lab{box-shadow:none}.nonce-lab__experiment button{display:none}.reading .pedagogy-step{break-inside:avoid}}
