@@ -57,3 +57,23 @@ El reset enviado por correo vence en 30 minutos. La verificación vence en 24 ho
 Los códigos personales son ocho, con 48 caracteres hexadecimales aleatorios cada uno; se muestran una sola vez. La regeneración exige la contraseña actual e invalida los anteriores. El restablecimiento con cada código también invalida sesiones anteriores.
 
 En el plan gratuito de Resend se admiten 3.000 envíos mensuales y 100 diarios (confirmar precios y cuotas al activarlo). El sistema nunca envía mensajes ni admite restablecimiento por email mientras EMAIL_RECOVERY_ENABLED sea false.
+
+
+## Acceso académico para una segunda profesora (sin permisos técnicos)
+
+El campus permite asignar un permiso `teacher` a una cuenta registrada sin modificar el `CHECK` original de `users.role`, ni añadir permisos de Cloudflare, GitHub o configuración del Worker. El permiso docente se almacena por separado en `teacher_grants`, tabla aditiva creada automáticamente mediante una operación autenticada y autorizada del administrador al habilitar la primera docente.
+
+**Alta en el panel (administrador):**
+1. Entrar al campus con la cuenta administradora y abrir **Mi cuenta**.
+2. Generar una **invitación individual** en «Invitar estudiantes», identificada para la profesora.
+3. Entregar el código por un canal privado. La profesora se registra con su propio usuario, correo y contraseña; inicialmente aparece como estudiante.
+4. En «Acceso de otros docentes», escribir **su nombre de usuario exacto** y pulsar «Habilitar docente».
+5. Pedirle que vuelva a iniciar sesión o actualice la página para mostrar el **panel académico**. El acceso se verifica también en cada petición del servidor, incluso con sesiones ya abiertas.
+
+**Qué puede hacer:** leer el curso, consultar lista y progreso de estudiantes, revisar la propuesta escrita y los cuestionarios por estudiante, escribir devoluciones que aparecen en «Mi cuenta» del alumno, generar/revocar invitaciones y emitir códigos de recuperación de cuentas estudiantiles previa comprobación de identidad.
+
+**Qué no puede hacer:** crear o revocar otros docentes, recuperar cuentas docentes mediante la herramienta asistida, alterar permisos de administrador, gestionar secretos/API keys, modificar configuración de Cloudflare o desplegar software.
+
+El administrador puede **revocar** un permiso docente desde el mismo panel; la revocación surte efecto sin cambiar la contraseña ni volver a crear la cuenta. El contenido de las notas personales privadas del alumno **no se muestra** en la revisión de tareas. Las tablas `teacher_grants` y `academic_reviews` se crean de forma aditiva únicamente al realizar las operaciones correspondientes; no se recrea ni borra la tabla `users`.
+
+**Importante:** una cuenta docente no se crea enviando simplemente un correo. Debe haber un registro individual y una habilitación explícita por el administrador del campus.
