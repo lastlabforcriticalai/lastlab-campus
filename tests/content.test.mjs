@@ -51,7 +51,7 @@ test('Colombia frontend displays updated charts and pesos, not Ecuador-based sim
  assert.match(ui,/Ingreso mensual estimado \(COP\)/);
  assert.match(ui,/Pagos mensuales de deudas \(COP\)/);
  assert.doesNotMatch(ui,/cooperativa ecuatoriana|Ingreso mensual estimado \(USD\)/);
- assert.match(html,/fundamentos-20261111/);
+ assert.match(html,/fundamentos-20261112/);
 });
 
 
@@ -92,29 +92,33 @@ test('responsive dashboard styling retains table readability and cards work inde
  const accountCss=readFileSync(new URL('../public/account.css',import.meta.url),'utf8');
  for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
  assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
- assert.ok(html.includes('/course.css?v=fundamentos-20261111'));
- assert.ok(html.includes('/course.js?v=fundamentos-20261111'));
+ assert.ok(html.includes('/course.css?v=fundamentos-20261112'));
+ assert.ok(html.includes('/course.js?v=fundamentos-20261112'));
 });
 
 
 
-test('browser animations use explicit keyframes to flip and grow despite CSS animation preferences',()=>{
+test('cards keep crisp text on hover while retaining the interactive flip',()=>{
  const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
- assert.match(css,/\.metric-card:hover,\.metric-card\[data-hovered="true"\]/);
- assert.match(css,/scale\(1\.075\)/);
- assert.match(css,/\.metric-card\.is-flipped \.metric-card__inner/);
+ assert.doesNotMatch(css,/scale\\(1\\.075\\)/);
+ assert.match(css,/\\.metric-card:hover\\{transform:none\\}/);
+ assert.match(css,/\\.metric-card\\.is-flipped \\.metric-card__inner/);
  assert.match(css,/backface-visibility:hidden/);
- assert.match(ui,/function activateFlipCards\(/);
- assert.match(ui,/inner\.animate\(/);
- assert.match(ui,/card\.animate\(/);
+ assert.match(ui,/function activateFlipCards\\(/);
+ assert.match(ui,/inner\\.animate\\(/);
+ assert.doesNotMatch(ui,/card\\.animate\\(/);
  assert.match(ui,/duration:950/);
- assert.match(ui,/duration:320/);
  assert.match(ui,/target===180/);
  assert.match(ui,/Clic para girar/);
  assert.match(ui,/Clic para volver/);
- assert.match(html,/fundamentos-20261111/);
 });
-
+test('two scalable Bitcoin diagrams are included with real block data',()=>{
+ const svg=readFileSync(new URL('../public/bitcoin-bloque-nonce.svg',import.meta.url),'utf8');
+ assert.match(ui,/bitcoin-bloque-170\\.svg/);
+ assert.match(ui,/bitcoin-bloque-nonce\\.svg/);
+ assert.match(svg,/<svg/);
+ assert.match(svg,/1\\.889\\.418\\.792/);
+});
 
 test('second day follows verified institutional schedule and has three dedicated learning activities',()=>{
  const start=ui.indexOf('function dayTwoIntroPanel(){');
@@ -225,7 +229,7 @@ test('Bitcoin 170 educational tree and all six real header fields are visible an
  for(const piece of ['b1fea524','f4184fc5','7dac2c5666815c17a3b36427de37bb9d2e2c5ccec3f8633eb91a4205cb4c10ff','1.889.418.792','0x709e3e28'])assert.ok(copy.includes(piece),piece);
  assert.match(copy,/orden de bytes/);
  assert.match(ui,/function realBitcoinDiagram\(\)/);
- assert.match(ui,/src="\/bitcoin-bloque-170\.svg\?v=fundamentos-20261111"/);
+ assert.match(ui,/src="\/bitcoin-bloque-170\.svg\?v=fundamentos-20261112"/);
  assert.match(ui,/Mostrar los seis campos completos del bloque 170/);
  assert.match(ui,/000000002a22cfee1f2c846adbd12b3e183d4f97683f85dad08a79780a84bd55/);
  assert.match(ui,/00000000d1145790a8694403d4063f323d499e655c83426834d4ce2f8dd4a2ee/);
