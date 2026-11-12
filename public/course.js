@@ -133,7 +133,7 @@ function dayTwoIntroPanel(){
   ["20 min","Decisión institucional","Presentar una propuesta grupal verificable"]
  ];
  return `<section class="panel day-two-studio">
- <div class="sectionEyebrow">JORNADA 02 · CLASE PRESENCIAL · COLOMBIA</div>
+ <div class="sectionEyebrow">JORNADA 02 · PRESENCIAL · GRUPO UNIMINUTO</div>
  <div class="day-two-studio__head"><div><h2>De la innovación a las decisiones que afectan a las personas</h2><p>Un laboratorio de dos horas para investigar qué hace realmente la IA en las finanzas, cuándo conviene utilizarla y cómo evaluar sus efectos.</p></div><div class="day-two-studio__date"><strong>25 NOV</strong><small>13:00–15:00 · Argentina</small><small>11:00–13:00 · Colombia</small></div></div>
  <div class="day-two-agenda">${agenda.map(([time,title,why],i)=>`<div class="day-two-agenda__row"><span class="day-two-agenda__num">${String(i+1).padStart(2,"0")}</span><strong>${esc(time)}</strong><div><b>${esc(title)}</b><small>${esc(why)}</small></div></div>`).join("")}</div>
  <p class="day-two-studio__disclaimer">Las lecturas del campus amplían el trabajo presencial; no están pensadas para leerse completas durante las dos horas de clase.</p>
