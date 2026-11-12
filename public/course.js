@@ -336,7 +336,44 @@ function bindFraudWorkshop(){
  slider.addEventListener("input",refresh);
  refresh();
 }
-function bind(){activateFlipCards();bindFraudWorkshop();
+function bindDay2Studios(){
+ const modeData={
+ reglas:["REGLAS EXPLÍCITAS","Reglas","Si se cumple una condición definida por personas, el sistema ejecuta una acción.","Condiciones escritas","Evaluación determinista","Acción predefinida","Al superar un límite de transferencia, pedir verificación adicional.","Una regla rígida puede excluir operaciones legítimas; las excepciones necesitan revisión."],
+ predictiva:["PREDICCIÓN ESTADÍSTICA","IA predictiva","Un modelo estima regularidades a partir de datos para producir una probabilidad o un puntaje.","Datos y etiquetas","Modelo entrenado","Estimación / puntuación","Estimar riesgo de crédito desde un conjunto de historiales.","La correlación no demuestra causalidad; un buen desempeño promedio puede ocultar errores desiguales."],
+ generativa:["PRODUCCIÓN DE CONTENIDO","IA generativa","Produce texto y otros contenidos a partir de un contexto y patrones aprendidos.","Instrucción y contexto","Generación de contenido","Texto / propuesta","Redactar un borrador de respuesta sobre un producto financiero para revisión.","Puede inventar información o exponer datos; no debe decidir autónomamente sobre derechos."]
+ };
+ document.querySelectorAll("[data-ai-mode]").forEach(btn=>btn.addEventListener("click",()=>{
+  const d=modeData[btn.dataset.aiMode];if(!d)return;
+  for(const [id,value] of [["aiModeKicker",d[0]],["aiModeName",d[1]],["aiModeDesc",d[2]],["aiModeInput",d[3]],["aiModeProcess",d[4]],["aiModeOutput",d[5]],["aiModeExample",d[6]],["aiModeRisk",d[7]]]){
+   const el=document.getElementById(id);if(el)el.textContent=value;
+  }
+  document.querySelectorAll("[data-ai-mode]").forEach(el=>{const active=el===btn;el.classList.toggle("is-active",active);el.setAttribute("aria-pressed",String(active));});
+  const number=document.getElementById("aiModeNumber");if(number)number.textContent={reglas:"01",predictiva:"02",generativa:"03"}[btn.dataset.aiMode]+" / 03";
+ }));
+ const credit=document.getElementById("creditThreshold");
+ if(credit){
+  const payroll=[44,55,62,68,77,89],independent=[42,47,54,58,65,73];
+  const refresh=()=>{
+   const cutoff=Number(credit.value),p=payroll.filter(n=>n>=cutoff).length,i=independent.filter(n=>n>=cutoff).length,pct=n=>Math.round(100*n/6);
+   document.getElementById("creditThresholdValue").textContent=cutoff+" / 100";
+   document.getElementById("creditPayrollCount").textContent=p+" de 6 · "+pct(p)+" %";
+   document.getElementById("creditIndependentCount").textContent=i+" de 6 · "+pct(i)+" %";
+   document.getElementById("creditPayrollBar").style.width=pct(p)+"%";
+   document.getElementById("creditIndependentBar").style.width=pct(i)+"%";
+   document.getElementById("creditFinding").textContent="Se aprueban "+(p+i)+" de las 12 solicitudes ficticias. Diferencia entre grupos del mismo tamaño: "+Math.abs(p-i)+" aprobaciones. El resultado no explica por sí solo las causas de la diferencia.";
+  };credit.addEventListener("input",refresh);refresh();
+ }
+ const checkboxes=[...document.querySelectorAll(".audit-check")];
+ if(checkboxes.length){
+  const refresh=()=>{
+   const count=checkboxes.filter(x=>x.checked).length;
+   document.getElementById("auditCount").textContent=count+" / "+checkboxes.length;
+   document.getElementById("auditBar").style.width=Math.round(100*count/checkboxes.length)+"%";
+   document.getElementById("auditVerdict").textContent=count===checkboxes.length?"Todos los controles están marcados. Todavía falta revisar calidad de evidencia y eficacia real: no equivale a una certificación.":count===0?"No se ha marcado ningún control. Antes de desplegar se necesita evidencia, responsables y mecanismos de reparación.":"Quedan "+(checkboxes.length-count)+" controles sin acreditar. Esto no es una aprobación del sistema.";
+  };checkboxes.forEach(x=>x.addEventListener("change",refresh));refresh();
+ }
+}
+function bind(){activateFlipCards();bindFraudWorkshop();bindDay2Studios();
 if($('moduleGrade')){let i=+$('moduleGrade').dataset.unit,quiz=MODULES[i].quiz;let current=state.moduleQuiz[i]||{answers:{}};document.querySelectorAll('input[name^="modq-"]').forEach(el=>el.onchange=()=>{current.answers=current.answers||{};let j=Number(el.name.split('-')[2]);current.answers[j]=Number(el.value);current.graded=false;state.moduleQuiz[i]=current;save()});$('moduleGrade').onclick=()=>{current.answers=current.answers||{};current.graded=true;current.score=quiz.filter((q,j)=>current.answers[j]===q.c).length;state.moduleQuiz[i]=current;save();if(window.LASTAuth?.isLoggedIn())window.LASTAuth.submitQuiz(i,current.answers).then(result=>{current.score=result.score;current.graded=true;current.verified=true;state.moduleQuiz[i]=current;save();let out=$('moduleSummary');if(out)out.textContent='Resultado verificado: '+result.score+' de '+result.total+' correctas. Intento registrado en tu cuenta.'}).catch(err=>{let out=$('moduleSummary');if(out)out.textContent='Resultado local: '+current.score+'/'+quiz.length+'. No pudo registrarse en el servidor: '+err.message;});quiz.forEach((q,j)=>{$('mqf-'+j).textContent=(current.answers[j]===q.c?'✓ Correcta. ':'✗ Respuesta correcta: '+q.a[q.c]+'. ')+q.why});$('moduleSummary').textContent='Resultado: '+current.score+' de '+quiz.length+' correctas. '+(current.score===quiz.length?'¡Dominás los conceptos centrales!':'Revisá las explicaciones y volvé a intentarlo.')};$('moduleReset').onclick=()=>{delete state.moduleQuiz[i];save();route()}}let done=$('doneBtn');if(done)done.onclick=()=>{let i=+done.dataset.index;state.done=state.done.includes(i)?state.done.filter(x=>x!==i):[...state.done,i].sort((a,b)=>a-b);save();route()};if($('hashBtn')){$('hashBtn').onclick=async()=>{let s=$('blockText').value,n=$('nonce').value;state.block=s;state.nonce=n;save();let v=s+'|'+n;try{if(!crypto||!crypto.subtle)throw Error('Sin soporte Web Crypto');let h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));let hex=Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');$('hashOutput').innerHTML=`<div>SHA-256 de texto + nonce:</div><code style="overflow-wrap:anywhere">${hex}</code><p>Probá cambiar un carácter y comparar.</p>`}catch(e){$('hashOutput').textContent='El cálculo requiere un contexto seguro (HTTPS o localhost). Al publicar en Cloudflare HTTPS estará disponible.'}};}
 if($('income')){let update=()=>{['income','debt','threshold'].forEach(k=>{state.co[k]=Number($(k).value);$(k+'V').textContent=(k==='threshold'?'Máximo puntaje de riesgo: ': 'COP ')+ (k==='threshold'?state.co[k]:state.co[k].toLocaleString('es-CO'))+(k==='threshold'?'/100':'')});state.co.history=Number($('history').value);let ratio=state.co.income?state.co.debt/state.co.income:1;let score=Math.min(100,Math.round(10+ratio*65+(2-state.co.history)*14));let approved=score<=state.co.threshold;let o=$('creditOutput');o.innerHTML=`<div><small>Relación de pagos de deuda / ingresos: <b>${(ratio*100).toFixed(1)}%</b></small></div><strong>Puntaje didáctico: ${score}/100</strong><p class="${approved?'good':'error'}"><b>${approved?'Cumple la regla ficticia':'No cumple la regla ficticia'}</b> con umbral de ${state.co.threshold}/100.</p><p>Fórmula: 10 + 65 × deuda/ingreso + 14 × (2 − categoría de historial), limitado a 100 y redondeado. <b>NO es probabilidad ni asesoramiento crediticio.</b></p>`;save()};['income','debt','threshold','history'].forEach(k=>$(k).addEventListener('input',update));$('history').value=state.co.history;update()}
 if($('taskText')){$('taskText').oninput=()=>{state.task=$('taskText').value;save()};$('taskDownload').onclick=()=>download('propuesta-cooperativa.txt',state.task||'Propuesta pendiente');$('taskCopy').onclick=()=>{navigator.clipboard?.writeText($('taskText').value).then(()=>{$('taskCopy').textContent='Copiado ✓'}).catch(()=>alert('Seleccioná el texto y copialo manualmente.'))}};
