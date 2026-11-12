@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1020" viewBox="0 0 1600 1020" role="img" aria-labelledby="title desc">
+<title id="title">Anatomía real del bloque Bitcoin 170: árbol de Merkle, seis campos del encabezado y nonce</title>
+<desc id="desc">Esquema en español basado en datos verificables del bloque número 170 de Bitcoin, minado el 12 de enero de 2009. A la izquierda: dos transacciones reales se combinan en la raíz de Merkle. A la derecha: versión, hash del bloque anterior, raíz Merkle, marca de tiempo, objetivo compacto y nonce. Abajo: doble SHA-256 genera un hash válido menor al objetivo.</desc>
+<defs>
+ <linearGradient id="head" x1="0" x2="1"><stop stop-color="#123e2c"/><stop offset="1" stop-color="#216340"/></linearGradient>
+ <linearGradient id="mainbg" x1="0" x2="1"><stop stop-color="#f7faf5"/><stop offset="1" stop-color="#f0f7ee"/></linearGradient>
+ <linearGradient id="mint" x1="0" x2="1"><stop stop-color="#e1f3e1"/><stop offset="1" stop-color="#f7fbf0"/></linearGradient>
+ <filter id="shadow" x="-12%" y="-12%" width="130%" height="145%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#17442a" flood-opacity=".11"/></filter>
+ <marker id="arrow" markerWidth="12" markerHeight="12" refX="7" refY="6" orient="auto"><path d="M2 1L10 6L2 11" fill="none" stroke="#338356" stroke-width="2"/></marker>
+ <style>
+ text{font-family:"DM Sans",Arial,sans-serif}
+ .title{font-size:48px;letter-spacing:-1.6px;font-weight:800;fill:#fff}
+ .subtitle{font-size:24px;fill:#d5efda}
+ .kicker{font-size:17px;letter-spacing:1.5px;font-weight:800;fill:#3b9062}
+ .section{font-size:26px;font-weight:800;fill:#1d4c33}
+ .body{font-size:17px;fill:#536d5b}
+ .tx-title{font-size:24px;font-weight:800;fill:#19462c}
+ .tx-sub{font-size:17px;fill:#4b6a55}
+ .hash{font-family:ui-monospace,SFMono-Regular,monospace;font-size:17px;font-weight:650;fill:#1f663e}
+ .field-label{font-size:18px;font-weight:800;fill:#2e6043}
+ .field-value{font-family:ui-monospace,SFMono-Regular,monospace;font-size:23px;font-weight:800;fill:#183f2b}
+ .field-desc{font-size:16px;fill:#637e69}
+ </style>
+</defs>
+<rect width="1600" height="1020" fill="url(#mainbg)"/>
+<rect x="0" y="0" width="1600" height="139" fill="url(#head)"/>
+<text x="49" y="47" font-size="17" font-weight="800" fill="#b4e2c3" letter-spacing="3">LAST LAB · CAMPUS</text>
+<text x="49" y="101" class="title">ANATOMÍA DE UN BLOQUE DE BITCOIN</text>
+<rect x="1135" y="37" width="413" height="65" rx="16" fill="#e9f6e9"/>
+<text x="1341" y="65" text-anchor="middle" font-size="23" font-weight="800" fill="#205038">BLOQUE REAL N.º 170</text>
+<text x="1341" y="90" text-anchor="middle" font-size="17" fill="#58765d">12 ENE 2009 · 2 TRANSACCIONES</text>
+<rect x="33" y="164" width="714" height="581" rx="22" fill="#ffffff" stroke="#d3e5d6" stroke-width="1.5" filter="url(#shadow)"/>
+<rect x="768" y="164" width="799" height="581" rx="22" fill="#ffffff" stroke="#d3e5d6" stroke-width="1.5" filter="url(#shadow)"/>
+<circle cx="75" cy="205" r="24" fill="#d9efda"/><text x="75" y="214" text-anchor="middle" font-size="24" font-weight="800" fill="#226945">1</text>
+<text x="111" y="214" class="section">DE LAS TRANSACCIONES A LA RAÍZ</text>
+<text x="68" y="250" class="body">El árbol de Merkle reúne hashes hasta obtener uno solo.</text>
+<rect x="172" y="303" width="430" height="105" rx="19" fill="url(#head)"/>
+<text x="387" y="339" text-anchor="middle" font-size="23" font-weight="800" fill="#fff">RAÍZ DE MERKLE</text>
+<text x="387" y="379" text-anchor="middle" fill="#ddf2df" font-family="ui-monospace,monospace" font-weight="750" font-size="27">7dac2c56…4c10ff</text>
+<path d="M230 478V449Q230 435 244 435H373V410 M544 478V449Q544 435 530 435H402V410" fill="none" stroke="#358257" stroke-width="4" marker-end="url(#arrow)"/>
+<rect x="286" y="423" width="204" height="39" rx="10" fill="#f1f9ef" stroke="#d4e6d5"/>
+<text x="388" y="439" text-anchor="middle" font-size="13" font-weight="800" fill="#35724b">DOBLE SHA-256</text>
+<text x="388" y="455" text-anchor="middle" font-size="12" fill="#557660">de la pareja de hashes</text>
+<rect x="54" y="481" width="312" height="132" rx="18" fill="#fff" stroke="#b8d9c0" stroke-width="1.5" /><text x="74" y="520" class="tx-title">TX 0 · Coinbase</text><text x="74" y="551" class="tx-sub">Recompensa minera</text><rect x="71" y="571" width="278" height="26" rx="8" fill="#e8f3e9"/><text x="80" y="589" class="hash">b1fea524…1c5082</text>
+<rect x="395" y="481" width="312" height="132" rx="18" fill="#fff" stroke="#b8d9c0" stroke-width="1.5" /><text x="415" y="520" class="tx-title">TX 1 · Transferencia</text><text x="415" y="551" class="tx-sub">Movimiento de 10 BTC</text><rect x="412" y="571" width="278" height="26" rx="8" fill="#e8f3e9"/><text x="421" y="589" class="hash">f4184fc5…1e9e16</text>
+<rect x="68" y="646" width="646" height="74" rx="14" fill="#ebf5eb" stroke="#d0e4d3"/>
+<text x="89" y="673" font-size="18" font-weight="800" fill="#286244">IDEA CLAVE</text>
+<text x="89" y="699" font-size="17" fill="#3e684b">Si cambia una transacción, cambia su hash y la raíz.</text>
+<circle cx="810" cy="205" r="24" fill="#d9efda"/><text x="810" y="214" text-anchor="middle" font-size="24" font-weight="800" fill="#226945">2</text>
+<text x="846" y="214" class="section">LOS 6 DATOS DEL ENCABEZADO</text>
+<text x="793" y="248" class="body">Estos son valores auténticos del bloque 170 (hashes abreviados).</text>
+<rect x="790" y="266" width="356" height="124" rx="15" fill="#ffffff" stroke="#cfdfd2" stroke-width="1.5" /><circle cx="819" cy="293" r="16" fill="#deeee0"/><text x="819" y="299" font-size="17" font-weight="800" text-anchor="middle" fill="#28784d">1</text><text x="844" y="299" class="field-label">VERSIÓN</text><text x="813" y="341" class="field-value">1 (0x00000001)</text><text x="813" y="369" class="field-desc">Formato / reglas del bloque.</text>
+<rect x="1186" y="266" width="356" height="124" rx="15" fill="#ffffff" stroke="#cfdfd2" stroke-width="1.5" /><circle cx="1215" cy="293" r="16" fill="#deeee0"/><text x="1215" y="299" font-size="17" font-weight="800" text-anchor="middle" fill="#28784d">2</text><text x="1240" y="299" class="field-label">HASH DEL ANTERIOR</text><text x="1209" y="341" class="field-value">000000002a22…a84bd55</text><text x="1209" y="369" class="field-desc">Enlaza con el bloque 169.</text>
+<rect x="790" y="406" width="356" height="124" rx="15" fill="#ffffff" stroke="#cfdfd2" stroke-width="1.5" /><circle cx="819" cy="433" r="16" fill="#deeee0"/><text x="819" y="439" font-size="17" font-weight="800" text-anchor="middle" fill="#28784d">3</text><text x="844" y="439" class="field-label">RAÍZ DE MERKLE</text><text x="813" y="481" class="field-value">7dac2c56…4c10ff</text><text x="813" y="509" class="field-desc">Compromete 2 transacciones.</text>
+<rect x="1186" y="406" width="356" height="124" rx="15" fill="#ffffff" stroke="#cfdfd2" stroke-width="1.5" /><circle cx="1215" cy="433" r="16" fill="#deeee0"/><text x="1215" y="439" font-size="17" font-weight="800" text-anchor="middle" fill="#28784d">4</text><text x="1240" y="439" class="field-label">MARCA DE TIEMPO</text><text x="1209" y="481" class="field-value">12/01/2009</text><text x="1209" y="509" class="field-desc">03:30:25 UTC (1231731025).</text>
+<rect x="790" y="546" width="356" height="124" rx="15" fill="#ffffff" stroke="#cfdfd2" stroke-width="1.5" /><circle cx="819" cy="573" r="16" fill="#deeee0"/><text x="819" y="579" font-size="17" font-weight="800" text-anchor="middle" fill="#28784d">5</text><text x="844" y="579" class="field-label">OBJETIVO COMPACTO</text><text x="813" y="621" class="field-value">0x1d00ffff</text><text x="813" y="649" class="field-desc">nBits: codifica la dificultad.</text>
+<rect x="1186" y="546" width="356" height="124" rx="15" fill="#eaf6e8" stroke="#cfdfd2" stroke-width="1.5" /><circle cx="1215" cy="573" r="16" fill="#deeee0"/><text x="1215" y="579" font-size="17" font-weight="800" text-anchor="middle" fill="#28784d">6</text><text x="1240" y="579" class="field-label">NONCE</text><text x="1209" y="621" class="field-value">1.889.418.792</text><text x="1209" y="649" class="field-desc">0x709e3e28 · valor hallado.</text>
+<text x="797" y="707" font-size="15" fill="#59735d">Tamaño total del encabezado: 80 bytes. El nonce es uno de sus 6 campos.</text>
+<rect x="33" y="768" width="1534" height="178" rx="20" fill="#143f2c" stroke="#143f2c" stroke-width="1.5" filter="url(#shadow)"/>
+<circle cx="79" cy="812" r="24" fill="#b6e0be"/><text x="79" y="821" font-size="24" font-weight="800" text-anchor="middle" fill="#205e3d">3</text>
+<text x="116" y="820" font-size="26" font-weight="800" fill="#fff">PRUEBA DE TRABAJO: ¿QUÉ HACE EL NONCE?</text>
+<text x="116" y="857" font-size="19" fill="#d8efdc">Encabezado (incluye nonce)</text>
+<text x="445" y="857" font-size="27" fill="#acdcb5">→</text>
+<text x="486" y="857" font-size="19" font-weight="800" fill="#fff">SHA-256 DOS VECES</text>
+<text x="757" y="857" font-size="27" fill="#acdcb5">→</text>
+<text x="800" y="857" font-size="19" font-weight="800" fill="#fff">HASH ACEPTADO</text>
+<rect x="792" y="876" width="705" height="42" rx="11" fill="#e6f5e7"/>
+<text x="820" y="904" font-family="ui-monospace,monospace" font-size="24" font-weight="800" fill="#185538">00000000d1145790…8dd4a2ee</text>
+<text x="116" y="906" font-size="15" fill="#c9e6d1">El hash debe ser numéricamente ≤ al objetivo codificado en nBits.</text>
+<text x="49" y="980" font-size="16" font-weight="750" fill="#365b43">Fuente: mempool.space · bloque n.º 170 · Bitcoin</text>
+<text x="1545" y="980" text-anchor="end" font-size="14" fill="#6a8673">Datos reales · valores hexadecimales abreviados · esquema didáctico</text>
+</svg>
