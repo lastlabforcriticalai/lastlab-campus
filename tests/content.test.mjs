@@ -51,7 +51,7 @@ test('Colombia frontend displays updated charts and pesos, not Ecuador-based sim
  assert.match(ui,/Ingreso mensual estimado \(COP\)/);
  assert.match(ui,/Pagos mensuales de deudas \(COP\)/);
  assert.doesNotMatch(ui,/cooperativa ecuatoriana|Ingreso mensual estimado \(USD\)/);
- assert.match(html,/clases-ampliadas-20261111/);
+ assert.match(html,/bloque-real170-20261111/);
 });
 
 
@@ -92,8 +92,8 @@ test('responsive dashboard styling retains table readability and cards work inde
  const accountCss=readFileSync(new URL('../public/account.css',import.meta.url),'utf8');
  for(const rule of ['.market-data-grid','.metric-card__inner','.metric-card__front','.metric-card__back','.market-history-table tbody tr:hover','.metric-card:focus-visible','prefers-reduced-motion:reduce'])assert.ok(css.includes(rule),'Missing '+rule);
  assert.ok(accountCss.includes('.table-wrap tbody tr:hover td'));
- assert.ok(html.includes('/course.css?v=clases-ampliadas-20261111'));
- assert.ok(html.includes('/course.js?v=clases-ampliadas-20261111'));
+ assert.ok(html.includes('/course.css?v=bloque-real170-20261111'));
+ assert.ok(html.includes('/course.js?v=bloque-real170-20261111'));
 });
 
 
@@ -112,7 +112,7 @@ test('browser animations use explicit keyframes to flip and grow despite CSS ani
  assert.match(ui,/target===180/);
  assert.match(ui,/Clic para girar/);
  assert.match(ui,/Clic para volver/);
- assert.match(html,/clases-ampliadas-20261111/);
+ assert.match(html,/bloque-real170-20261111/);
 });
 
 
@@ -160,9 +160,9 @@ test('second day content contains current Colombian source-based research and ke
 });
 
 
-test('all 95 teaching sections include unique accessible starting explanations without replacing advanced paragraphs',()=>{
+test('all 96 teaching sections include unique accessible starting explanations without replacing advanced paragraphs',()=>{
  const all=course.units.flatMap((unit,index)=>unit.sections.map(s=>({unit:index+1,...s})));
- assert.equal(all.length,95);
+ assert.equal(all.length,96);
  assert.equal(all.filter(s=>s.entrada?.length>90 && s.comprobar?.length>18).length,all.length);
  assert.ok(new Set(all.map(s=>s.entrada)).size===all.length,'Each lesson should have its own example');
  assert.ok(new Set(all.map(s=>s.comprobar)).size===all.length,'Each topic should have its own check question');
@@ -212,4 +212,24 @@ test('both jornadas have date and time in Argentina and Colombia, and all five d
  assert.match(ui,/function bindDay2Studios/);
  const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
  for(const item of ['.daySchedule','.unitSchedule','.studio-tabs','.credit-comparison','.audit-grid','.atlas-card','.nonce-lab'])assert.ok(css.includes(item));
+});
+
+test('Bitcoin 170 educational tree and all six real header fields are visible and verifiable',()=>{
+ const unit=course.units[2],merkle=unit.sections.find(s=>s.title==='Qué es un árbol de Merkle y cómo se obtiene su raíz');
+ assert.ok(merkle,'Dedicated Merkle introduction');
+ const nonceIndex=unit.sections.findIndex(s=>s.title.startsWith('Qué es el nonce'));
+ const merkleIndex=unit.sections.indexOf(merkle);
+ assert.ok(merkleIndex>=0&&merkleIndex<nonceIndex,'Explain Merkle first');
+ assert.ok(merkle.paragraphs.length>=5);
+ const copy=merkle.paragraphs.join(' ');
+ for(const piece of ['b1fea524','f4184fc5','7dac2c5666815c17a3b36427de37bb9d2e2c5ccec3f8633eb91a4205cb4c10ff','1889418792','0x709e3e28'])assert.ok(copy.includes(piece),piece);
+ assert.match(copy,/orden de bytes/);
+ assert.match(ui,/function realBitcoinDiagram\(\)/);
+ assert.match(ui,/src="\/bitcoin-bloque-170\.svg"/);
+ assert.match(ui,/Mostrar los seis campos completos del bloque 170/);
+ assert.match(ui,/000000002a22cfee1f2c846adbd12b3e183d4f97683f85dad08a79780a84bd55/);
+ assert.match(ui,/00000000d1145790a8694403d4063f323d499e655c83426834d4ce2f8dd4a2ee/);
+ const svg=readFileSync(new URL('../public/bitcoin-bloque-170.svg',import.meta.url),'utf8');
+ for(const piece of ['<svg ','<title ','RAÍZ DE MERKLE','VERSIÓN','HASH DEL ANTERIOR','MARCA DE TIEMPO','OBJETIVO COMPACTO','NONCE','0x1d00ffff','1.889.418.792','7dac2c56','00000000d1145790'])assert.ok(svg.includes(piece),'Missing SVG '+piece);
+ assert.ok(course.references.some(ref=>ref.url.includes('mempool.space/block/00000000d1145790')));
 });
