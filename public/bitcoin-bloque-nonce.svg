@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 1480" role="img" aria-labelledby="title desc"><title id="title">Bloque de Bitcoin y nonce</title><desc id="desc">Infografía vectorial de LAST Lab CAMPUS sobre los campos del encabezado y la minería de Bitcoin. Ejemplo: bloque 170.</desc>
+<rect x="0" y="0" width="1040" height="1480" rx="0" fill="#f9faf5" stroke="#f9faf5" stroke-width="1.4"/>
+<rect x="0" y="0" width="1040" height="120" rx="0" fill="#103c2b" stroke="#103c2b" stroke-width="1.4"/>
+<text x="44" y="47" font-family="Arial,Helvetica,sans-serif" font-size="25" font-weight="700" fill="#bce8c3" text-anchor="start">LAST Lab · CAMPUS</text>
+<text x="44" y="90" font-family="Arial,Helvetica,sans-serif" font-size="45" font-weight="700" fill="#fff" text-anchor="start">Bloque de Bitcoin y nonce</text>
+<text x="910" y="81" font-family="Arial,Helvetica,sans-serif" font-size="69" font-weight="700" fill="#f7ae35" text-anchor="start">₿</text>
+<rect x="28" y="145" width="984" height="52" rx="14" fill="#0e513a" stroke="#0e513a" stroke-width="1.4"/>
+<text x="49" y="180" font-family="Arial,Helvetica,sans-serif" font-size="29" font-weight="700" fill="#fff" text-anchor="start">1.  ¿Qué es un bloque?</text>
+<rect x="30" y="211" width="978" height="142" rx="14" fill="#edf5e8" stroke="#c6d6c8" stroke-width="1.4"/>
+<text x="54" y="252" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="400" fill="#193d2b" text-anchor="start">Un bloque reúne transacciones y un encabezado (80 bytes).</text>
+<text x="54" y="284" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="400" fill="#193d2b" text-anchor="start">El encabezado conecta el bloque con la cadena y permite</text>
+<text x="54" y="316" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="400" fill="#193d2b" text-anchor="start">verificar la prueba de trabajo.</text>
+<rect x="28" y="378" width="984" height="52" rx="14" fill="#0e513a" stroke="#0e513a" stroke-width="1.4"/>
+<text x="49" y="413" font-family="Arial,Helvetica,sans-serif" font-size="29" font-weight="700" fill="#fff" text-anchor="start">2.  Los seis campos del encabezado</text>
+<rect x="29" y="450" width="321" height="185" rx="14" fill="#eaf4e6" stroke="#c6d6c8" stroke-width="1.4"/>
+<rect x="29" y="450" width="321" height="43" rx="12" fill="#20583f" stroke="#20583f" stroke-width="1.4"/>
+<text x="43" y="479" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="start">Versión</text>
+<text x="43" y="532" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#193d2b" text-anchor="start">1 (0x00000001)</text>
+<text x="43" y="566" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">Se relaciona con la evolución</text>
+<text x="43" y="590" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">de las reglas del protocolo.</text>
+<rect x="360" y="450" width="321" height="185" rx="14" fill="#eaf4e6" stroke="#c6d6c8" stroke-width="1.4"/>
+<rect x="360" y="450" width="321" height="43" rx="12" fill="#20583f" stroke="#20583f" stroke-width="1.4"/>
+<text x="374" y="479" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="start">Hash anterior</text>
+<text x="374" y="532" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#193d2b" text-anchor="start">0000…a84bd55</text>
+<text x="374" y="566" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">Identifica criptográficamente</text>
+<text x="374" y="590" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">el bloque precedente.</text>
+<rect x="691" y="450" width="321" height="185" rx="14" fill="#eaf4e6" stroke="#c6d6c8" stroke-width="1.4"/>
+<rect x="691" y="450" width="321" height="43" rx="12" fill="#20583f" stroke="#20583f" stroke-width="1.4"/>
+<text x="705" y="479" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="start">Raíz de Merkle</text>
+<text x="705" y="532" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#193d2b" text-anchor="start">7dac…4c10ff</text>
+<text x="705" y="566" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">Resume las transacciones</text>
+<text x="705" y="590" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">del bloque.</text>
+<rect x="29" y="652" width="321" height="185" rx="14" fill="#f2f7ed" stroke="#c6d6c8" stroke-width="1.4"/>
+<rect x="29" y="652" width="321" height="43" rx="12" fill="#20583f" stroke="#20583f" stroke-width="1.4"/>
+<text x="43" y="681" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="start">Marca temporal</text>
+<text x="43" y="734" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#193d2b" text-anchor="start">12/01/2009</text>
+<text x="43" y="768" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">Hora aproximada declarada</text>
+<text x="43" y="792" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">por el minero.</text>
+<rect x="360" y="652" width="321" height="185" rx="14" fill="#f2f7ed" stroke="#c6d6c8" stroke-width="1.4"/>
+<rect x="360" y="652" width="321" height="43" rx="12" fill="#20583f" stroke="#20583f" stroke-width="1.4"/>
+<text x="374" y="681" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="start">Objetivo (nBits)</text>
+<text x="374" y="734" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#193d2b" text-anchor="start">0x1d00ffff</text>
+<text x="374" y="768" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">Codifica el umbral que</text>
+<text x="374" y="792" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">debe cumplir el hash.</text>
+<rect x="691" y="652" width="321" height="185" rx="14" fill="#f2f7ed" stroke="#c6d6c8" stroke-width="1.4"/>
+<rect x="691" y="652" width="321" height="43" rx="12" fill="#20583f" stroke="#20583f" stroke-width="1.4"/>
+<text x="705" y="681" font-family="Arial,Helvetica,sans-serif" font-size="22" font-weight="700" fill="#fff" text-anchor="start">Nonce</text>
+<text x="705" y="734" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#193d2b" text-anchor="start">1.889.418.792</text>
+<text x="705" y="768" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">Número que se modifica</text>
+<text x="705" y="792" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#193d2b" text-anchor="start">para ensayar otro hash.</text>
+<rect x="28" y="868" width="984" height="52" rx="14" fill="#0e513a" stroke="#0e513a" stroke-width="1.4"/>
+<text x="49" y="903" font-family="Arial,Helvetica,sans-serif" font-size="29" font-weight="700" fill="#fff" text-anchor="start">3.  ¿Qué hace el nonce?</text>
+<rect x="28" y="930" width="984" height="132" rx="14" fill="#eaf4e8" stroke="#c6d6c8" stroke-width="1.4"/>
+<text x="50" y="968" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#193d2b" text-anchor="start">El nonce es un número de 32 bits. Al cambiarlo, el minero obtiene</text>
+<text x="50" y="997" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#193d2b" text-anchor="start">un hash diferente del encabezado. Busca uno cuyo valor numérico</text>
+<text x="50" y="1026" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="400" fill="#193d2b" text-anchor="start">sea menor o igual que el objetivo de dificultad.</text>
+<rect x="28" y="1088" width="984" height="52" rx="14" fill="#0e513a" stroke="#0e513a" stroke-width="1.4"/>
+<text x="49" y="1123" font-family="Arial,Helvetica,sans-serif" font-size="29" font-weight="700" fill="#fff" text-anchor="start">4.  Cómo funciona la minería</text>
+<rect x="29" y="1156" width="234" height="89" rx="14" fill="#edf6ea" stroke="#c6d6c8" stroke-width="1.4"/>
+<text x="44" y="1188" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700" fill="#193d2b" text-anchor="start">1. Preparar</text>
+<text x="44" y="1219" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#193d2b" text-anchor="start">encabezado</text>
+<text x="264" y="1205" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#176b49" text-anchor="middle">→</text>
+<rect x="278" y="1156" width="234" height="89" rx="14" fill="#e0f0df" stroke="#c6d6c8" stroke-width="1.4"/>
+<text x="293" y="1188" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700" fill="#193d2b" text-anchor="start">2. Calcular</text>
+<text x="293" y="1219" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#193d2b" text-anchor="start">doble SHA-256</text>
+<text x="513" y="1205" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#176b49" text-anchor="middle">→</text>
+<rect x="527" y="1156" width="234" height="89" rx="14" fill="#edf6ea" stroke="#c6d6c8" stroke-width="1.4"/>
+<text x="542" y="1188" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700" fill="#193d2b" text-anchor="start">3. Comparar</text>
+<text x="542" y="1219" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#193d2b" text-anchor="start">con objetivo</text>
+<text x="762" y="1205" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#176b49" text-anchor="middle">→</text>
+<rect x="776" y="1156" width="234" height="89" rx="14" fill="#e0f0df" stroke="#c6d6c8" stroke-width="1.4"/>
+<text x="791" y="1188" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700" fill="#193d2b" text-anchor="start">4. Repetir</text>
+<text x="791" y="1219" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#193d2b" text-anchor="start">si no cumple</text>
+<rect x="29" y="1270" width="981" height="107" rx="14" fill="#d5f0d0" stroke="#9fc5a2" stroke-width="1.4"/>
+<text x="51" y="1311" font-family="Arial,Helvetica,sans-serif" font-size="25" font-weight="700" fill="#193d2b" text-anchor="start">Ejemplo real: bloque 170</text>
+<text x="51" y="1344" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="400" fill="#193d2b" text-anchor="start">Su hash cumple el objetivo: 00000000d1145790…8dd4a2ee.</text>
+<rect x="27" y="1400" width="988" height="61" rx="12" fill="#103c2b" stroke="#103c2b" stroke-width="1.4"/>
+<text x="44" y="1424" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="500" fill="#fff" text-anchor="start">Idea clave: el nonce no es el hash ni una clave secreta.</text>
+<text x="44" y="1448" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="500" fill="#fff" text-anchor="start">Es una de las variables usadas para encontrar una prueba de trabajo válida.</text>
+</svg>
