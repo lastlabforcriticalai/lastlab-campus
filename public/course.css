@@ -291,16 +291,16 @@ html,body{max-width:100%;overflow-x:clip}
 .market-panel,.concept-card-panel{overflow:visible}
 .metric-card{
  position:relative;
- transform:translateY(0) scale(1);
+ transform:none;
  transform-origin:50% 50%;
  overflow:visible;
  will-change:transform;
  isolation:auto;
 }
 .metric-card:hover,.metric-card[data-hovered="true"]{
- transform:translateY(-4px) scale(1.075);
+ transform:none;
  z-index:12;
- filter:drop-shadow(0 15px 19px rgba(18,69,40,.16))
+ filter:drop-shadow(0 8px 12px rgba(18,69,40,.10))
 }
 .metric-card__inner{
  display:block;
