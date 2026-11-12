@@ -100,13 +100,13 @@ test('responsive dashboard styling retains table readability and cards work inde
 
 test('cards keep crisp text on hover while retaining the interactive flip',()=>{
  const css=readFileSync(new URL('../public/course.css',import.meta.url),'utf8');
- assert.doesNotMatch(css,/scale\\(1\\.075\\)/);
- assert.match(css,/\\.metric-card:hover\\{transform:none\\}/);
- assert.match(css,/\\.metric-card\\.is-flipped \\.metric-card__inner/);
+ assert.doesNotMatch(css,/scale\(1\.075\)/);
+ assert.match(css,/\.metric-card:hover\{transform:none\}/);
+ assert.match(css,/\.metric-card\.is-flipped \.metric-card__inner/);
  assert.match(css,/backface-visibility:hidden/);
- assert.match(ui,/function activateFlipCards\\(/);
- assert.match(ui,/inner\\.animate\\(/);
- assert.doesNotMatch(ui,/card\\.animate\\(/);
+ assert.match(ui,/function activateFlipCards\(/);
+ assert.match(ui,/inner\.animate\(/);
+ assert.doesNotMatch(ui,/card\.animate\(/);
  assert.match(ui,/duration:950/);
  assert.match(ui,/target===180/);
  assert.match(ui,/Clic para girar/);
@@ -114,10 +114,10 @@ test('cards keep crisp text on hover while retaining the interactive flip',()=>{
 });
 test('two scalable Bitcoin diagrams are included with real block data',()=>{
  const svg=readFileSync(new URL('../public/bitcoin-bloque-nonce.svg',import.meta.url),'utf8');
- assert.match(ui,/bitcoin-bloque-170\\.svg/);
- assert.match(ui,/bitcoin-bloque-nonce\\.svg/);
+ assert.match(ui,/bitcoin-bloque-170\.svg/);
+ assert.match(ui,/bitcoin-bloque-nonce\.svg/);
  assert.match(svg,/<svg/);
- assert.match(svg,/1\\.889\\.418\\.792/);
+ assert.match(svg,/1\.889\.418\.792/);
 });
 
 test('second day follows verified institutional schedule and has three dedicated learning activities',()=>{
