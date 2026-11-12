@@ -572,3 +572,65 @@ html,body{max-width:100%;overflow-x:clip}
  .nonce-lab__experiment-head{align-items:flex-start;flex-direction:column}
 }
 @media print{.nonce-lab{box-shadow:none}.nonce-lab__experiment button{display:none}.reading .pedagogy-step{break-inside:avoid}}
+
+
+/* Ejemplo verificable: anatomía del bloque Bitcoin 170, árbol de Merkle y nonce */
+.reading .bitcoin-real-figure{
+ box-sizing:border-box;
+ width:min(1100px,calc(100vw - 425px));
+ max-width:calc(100vw - 340px);
+ margin:28px 0 43px;
+ padding:clamp(15px,2.3vw,26px);
+ border:1px solid #cde1d0;
+ border-radius:21px;
+ background:linear-gradient(145deg,#f9fcf8,#f0f7f0);
+ box-shadow:0 17px 38px rgba(25,80,45,.085);
+ font-family:'DM Sans',Arial,sans-serif;
+}
+.bitcoin-real-figure__heading .sectionEyebrow{letter-spacing:.14em;color:#3d8a5a}
+.reading .bitcoin-real-figure__heading h3{
+ font:600 clamp(23px,2.3vw,30px)/1.2 'Source Serif 4',Georgia,serif;
+ letter-spacing:-.03em;
+ color:#19452c;
+ margin:7px 0 10px;
+}
+.reading .bitcoin-real-figure__heading p{
+ font:400 13px/1.8 'DM Sans',Arial,sans-serif;
+ color:#536d5c;max-width:850px;margin:0 0 20px;
+}
+.bitcoin-real-figure__image{display:block;border-radius:14px;overflow:hidden;outline-offset:4px;border:1px solid #ceded0;background:#f7fbf5;transition:transform .25s,box-shadow .25s}
+.bitcoin-real-figure__image img{width:100%;height:auto;display:block}
+.bitcoin-real-figure__image:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(25,74,42,.1)}
+.bitcoin-real-figure__image:focus-visible{outline:3px solid #378858}
+.bitcoin-real-figure__data{margin-top:17px;background:#fff;border:1px solid #d1e3d5;border-radius:13px;overflow:hidden}
+.bitcoin-real-figure__data summary{list-style:none;cursor:pointer;color:#24613f;font-weight:800;padding:16px 18px;font-size:13px;background:#eff7ef}
+.bitcoin-real-figure__data summary::-webkit-details-marker{display:none}
+.bitcoin-real-figure__data summary:hover{background:#e2f1e5}
+.bitcoin-real-figure__data summary:focus-visible{outline:3px solid #378858;outline-offset:-3px}
+.bitcoin-real-figure__data summary:before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;margin-right:11px;border-radius:6px;background:#d3e9d8;color:#28613e}
+.bitcoin-real-figure__data[open] summary:before{content:"−"}
+.bitcoin-real-figure__table-scroll{overflow-x:auto}
+.bitcoin-real-figure__data table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.55}
+.bitcoin-real-figure__data th,.bitcoin-real-figure__data td{padding:13px 15px;border-bottom:1px solid #e3eee6;vertical-align:top;text-align:left}
+.bitcoin-real-figure__data thead th{background:#eaf3eb;color:#234b33;font-size:11px;font-weight:850}
+.bitcoin-real-figure__data tbody th{font-weight:800;color:#32684c;width:26%}
+.bitcoin-real-figure__data tbody td:nth-child(2){width:46%}
+.bitcoin-real-figure__data tbody tr:nth-child(2n){background:#f9fcf9}
+.bitcoin-real-figure__data tbody tr:hover{background:#e8f4e9}
+.bitcoin-real-figure__data code{overflow-wrap:anywhere;word-break:break-all;font-size:11px;color:#185638;background:#edf6ed;border-radius:5px;padding:2px 4px}
+.bitcoin-real-figure__data small{display:block;color:#60826b;margin-top:5px}
+.reading .bitcoin-real-figure__data>p{font:400 12px/1.8 'DM Sans',Arial,sans-serif;color:#445e4c;padding:15px 17px;margin:0;overflow-wrap:anywhere}
+.reading .bitcoin-real-figure figcaption{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;color:#68806e;font-size:11px;line-height:1.7;margin-top:16px}
+.bitcoin-real-figure__links{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.bitcoin-real-figure__links a{font-size:12px;font-weight:800;color:#2b8550}
+@media(max-width:1080px){
+ .reading .bitcoin-real-figure{width:100%;max-width:100%}
+}
+@media(max-width:650px){
+ .reading .bitcoin-real-figure{padding:13px;border-radius:15px}
+ .reading .bitcoin-real-figure__heading h3{font-size:23px}
+ .reading .bitcoin-real-figure__data table{min-width:640px}
+ .bitcoin-real-figure__links{gap:10px}
+}
+@media(prefers-reduced-motion:reduce){.bitcoin-real-figure__image{transition:none}.bitcoin-real-figure__image:hover{transform:none}}
+@media print{.reading .bitcoin-real-figure{width:100%;max-width:100%;box-shadow:none;break-inside:avoid}.bitcoin-real-figure__image:hover{transform:none}}
